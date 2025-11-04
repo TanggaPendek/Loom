@@ -1,0 +1,39 @@
+{
+  "projectID": 0,
+  "projectName": "",
+  "projectPath": "",
+  "metadata": {
+    "author": "",
+    "description": "",
+    "createdAt": "",
+    "lastModified": ""
+  },
+  "nodeArray": [
+    {
+      "nodeID": 0,
+      "nodeName": "",
+      "nodePosition": {
+        "x": "",
+        "y": ""
+      },
+      "inputArray": [
+        {
+          "input1": ""
+        }
+      ],
+      "outputArray": [
+        {
+          "ouput1": ""
+        }
+      ],
+      "reference": "",
+      "metadata": {}
+    }
+  ],
+  "connectionArray": [
+    {
+      "from": "",
+      "to": ""
+    }
+  ]
+}
