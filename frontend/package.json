@@ -7,12 +7,16 @@
     "dev": "vite --host",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tailwind:init": "tailwindcss init -p"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "@xyflow/react": "^12.9.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "reactflow": "^11.11.4"
+    "reactflow": "^11.11.4",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
