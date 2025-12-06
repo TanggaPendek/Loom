@@ -1,0 +1,61 @@
+{
+  "projectId": "proj_001",
+  "projectName": "Seed Project",
+  "projectPath": "userdata/seed_project.json",
+  "metadata": {
+    "author": "Test Author",
+    "description": "This is a seed project for testing the engine.",
+    "createdAt": "2025-12-07T00:00:00Z",
+    "lastModified": "2025-12-07T00:00:00Z"
+  },
+  "nodes": [
+    {
+      "nodeId": "node_1",
+      "positionId": "pos_1",
+      "name": "Input Node",
+      "position": {"x": 100.0, "y": 200.0},
+      "input": [],
+      "output": ["out_1"],
+      "ref": "input_ref",
+      "metadata": {}
+    },
+    {
+      "nodeId": "node_2",
+      "positionId": "pos_2",
+      "name": "Processing Node",
+      "position": {"x": 300.0, "y": 200.0},
+      "input": ["in_1"],
+      "output": ["out_2"],
+      "ref": "process_ref",
+      "metadata": {}
+    },
+    {
+      "nodeId": "node_3",
+      "positionId": "pos_3",
+      "name": "Output Node",
+      "position": {"x": 500.0, "y": 200.0},
+      "input": ["in_2"],
+      "output": [],
+      "ref": "output_ref",
+      "metadata": {}
+    }
+  ],
+  "connections": [
+    {
+      "connectionId": "conn_1",
+      "sourceNodeId": "node_1",
+      "sourceOutput": "out_1",
+      "targetNodeId": "node_2",
+      "targetInput": "in_1",
+      "metadata": {}
+    },
+    {
+      "connectionId": "conn_2",
+      "sourceNodeId": "node_2",
+      "sourceOutput": "out_2",
+      "targetNodeId": "node_3",
+      "targetInput": "in_2",
+      "metadata": {}
+    }
+  ]
+}

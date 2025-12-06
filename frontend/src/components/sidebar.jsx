@@ -64,7 +64,7 @@ const nodeDefinitions = [
 
 export default function Sidebar() {
   return (
-    <div className="w-48 p-2 h-full border-r border-gray-300 bg-gray-100">
+    <div className="w-full p-2 h-full border-r border-gray-300 bg-gray-50 rounded-lg shadow-sm">
       <div className="font-bold text-gray-700 mb-2 text-sm">Node Library</div>
       {nodeDefinitions.map((node) => (
         <NodeItem
