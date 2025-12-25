@@ -1,6 +1,7 @@
 import sys
 from .modules.project_manager import ProjectManager
 import json
+import os
 
 def main():
     backend = ProjectManager()
@@ -22,19 +23,32 @@ def main():
             print("Usage: save <project_name> <json_updates_or_project_updates>")
             sys.exit(1)
 
-        try:
-            payload = json.loads(sys.argv[3])
-        except json.JSONDecodeError:
-            print("Invalid JSON")
-            sys.exit(1)
+    
 
-        # Extract optional fields safely
+        payload_arg = sys.argv[3]
+
+        # Detect if argument is a file
+        if os.path.isfile(payload_arg):
+            try:
+                with open(payload_arg, "r", encoding="utf-8") as f:
+                    payload = json.load(f)
+            except json.JSONDecodeError as e:
+                print("Invalid JSON in file:", e)
+                sys.exit(1)
+        else:
+            try:
+                payload = json.loads(payload_arg)
+            except json.JSONDecodeError as e:
+                print("Invalid JSON:", e)
+                sys.exit(1)
+
+
         entity_type = payload.get("entity_type")
         entity_id = payload.get("entity_id")
         updates = payload.get("updates")
         project_updates = payload.get("project_updates")
 
-        result = backend.save_project(
+        result = backend.update_project(   # call new ProjectManager method
             project_name,
             entity_type=entity_type,
             entity_id=entity_id,
@@ -42,6 +56,7 @@ def main():
             project_updates=project_updates
         )
         print(result)
+
 
 
     elif command == "index":
@@ -61,7 +76,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-#EXTRA ATTENTION NEED TO REMOVE THE SAVE METHOD... THE UPDATE FOR META DATA NOT WORKING

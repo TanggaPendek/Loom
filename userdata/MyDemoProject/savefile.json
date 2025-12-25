@@ -1,12 +1,12 @@
 {
     "projectId": "proj_003",
-    "projectName": "MyDemoProject",
+    "projectName": "NewName",
     "projectPath": "userdata\\MyDemoProject\\savefile.json",
     "metadata": {
         "author": "author",
-        "description": "init test",
+        "description": "New desc",
         "createdAt": "2025-12-16T01:13:02.532667Z",
-        "lastModified": "2025-12-16T01:25:12.737022Z"
+        "lastModified": "2025-12-25T20:53:48.244408Z"
     },
     "nodes": [
         {
@@ -19,11 +19,22 @@
         {
             "nodeId": "node_2",
             "position": {
-                "x": 300,
-                "y": 200
+                "x": 400,
+                "y": 300
             },
-            "name": "add_node"
+            "name": "add_node_updated"
         }
     ],
-    "connections": []
+    "connections": [
+        {
+            "connectionId": "conn_3",
+            "sourceNodeId": "node_2",
+            "sourceOutput": "out_2",
+            "targetNodeId": "node_3",
+            "targetInput": "var_1",
+            "metadata": {
+                "label": "data_flow"
+            }
+        }
+    ]
 }

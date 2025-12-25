@@ -1,10 +1,18 @@
 [
     {
         "projectId": "proj_003",
-        "projectName": "MyDemoProject",
-        "description": "init test",
+        "projectName": "NewName",
+        "description": "New desc",
         "author": "author",
-        "lastModified": "2025-12-16T01:25:12.737022Z",
+        "lastModified": "2025-12-25T20:53:48.244408Z",
         "projectPath": "userdata\\MyDemoProject\\savefile.json"
+    },
+    {
+        "projectId": "proj_003",
+        "projectName": "MyDemoProject_1",
+        "description": "Initial description",
+        "author": "author",
+        "lastModified": "2025-12-25T20:09:23.408684Z",
+        "projectPath": "userdata\\MyDemoProject_1\\savefile.json"
     }
 ]
