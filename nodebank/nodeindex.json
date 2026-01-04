@@ -1,0 +1,47 @@
+[
+    {
+        "nodeId": "node_func_1",
+        "name": "Multiply Function",
+        "type": "custom",
+        "metadata": {
+            "author": "tester",
+            "description": "A simple multiply function"
+        }
+    },
+    {
+        "nodeId": "node_func_1_1",
+        "name": "Multiply Function",
+        "type": "custom",
+        "metadata": {
+            "author": "tester",
+            "description": "A simple multiply function"
+        }
+    },
+    {
+        "nodeId": "node_func_1_2",
+        "name": "Multiply Function",
+        "type": "custom",
+        "metadata": {
+            "author": "tester",
+            "description": "A simple multiply function"
+        }
+    },
+    {
+        "nodeId": "node_func_1_3",
+        "name": "Multiply Function",
+        "type": "custom",
+        "metadata": {
+            "author": "tester",
+            "description": "A simple multiply function"
+        }
+    },
+    {
+        "nodeId": "node_func_1_4",
+        "name": "Multiply Function",
+        "type": "custom",
+        "metadata": {
+            "author": "tester",
+            "description": "A simple multiply function"
+        }
+    }
+]

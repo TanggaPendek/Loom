@@ -1,78 +1,92 @@
 import sys
-from .modules.project_manager import ProjectManager
 import json
-import os
+from pathlib import Path
+from .modules.project_manager import ProjectManager
+from .modules.node_manager import NodeManager
 
+# ===== Paths =====
+ROOT_DIR = Path(__file__).parent.parent.parent
+NODEBANK_PATH = ROOT_DIR / "nodebank"
+CUSTOM_NODE_PATH = NODEBANK_PATH / "custom"
+BUILTIN_NODE_PATH = NODEBANK_PATH / "builtin"
+NODE_INDEX_PATH = NODEBANK_PATH / "nodeindex.json"
+
+# Ensure folders exist
+CUSTOM_NODE_PATH.mkdir(parents=True, exist_ok=True)
+BUILTIN_NODE_PATH.mkdir(parents=True, exist_ok=True)
+
+# ===== Managers =====
+project_backend = ProjectManager()
+node_backend = NodeManager(base_path=CUSTOM_NODE_PATH)
+
+# ===== Helper =====
+def load_payload(payload_arg):
+    """Load payload from file or JSON string"""
+    path = Path(payload_arg)
+    if path.is_file():
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    else:
+        return json.loads(payload_arg)
+
+# ===== Main =====
 def main():
-    backend = ProjectManager()
-
     if len(sys.argv) < 2:
-        print("Usage: python main_backend.py <command> [project_name] [description_or_json]")
+        print("Usage: python -m backend1.src.main_backend <command> [args]")
         sys.exit(1)
 
     command = sys.argv[1].lower()
-    project_name = sys.argv[2] if len(sys.argv) > 2 else None
 
-    if command == "init":
-        description = sys.argv[3] if len(sys.argv) > 3 else None
-        result = backend.init_project(project_name, description)
-        print(result)
+    try:
+        # ===== Project commands =====
+        if command == "init":
+            project_name = sys.argv[2] if len(sys.argv) > 2 else None
+            description = sys.argv[3] if len(sys.argv) > 3 else None
+            result = project_backend.init_project(project_name, description)
+            print(result)
 
-    elif command == "save":
-        if len(sys.argv) < 4:
-            print("Usage: save <project_name> <json_updates_or_project_updates>")
-            sys.exit(1)
+        elif command == "save":
+            project_name = sys.argv[2] if len(sys.argv) > 2 else None
+            payload = load_payload(sys.argv[3])
+            entity_type = payload.get("entity_type")
+            entity_id = payload.get("entity_id")
+            updates = payload.get("updates")
+            project_updates = payload.get("project_updates")
+            result = project_backend.update_project(
+                project_name, entity_type=entity_type, entity_id=entity_id,
+                updates=updates, project_updates=project_updates
+            )
+            print(result)
 
-    
+        elif command == "index":
+            result = project_backend.update_index()
+            print(result)
 
-        payload_arg = sys.argv[3]
+        elif command == "delete":
+            project_name = sys.argv[2] if len(sys.argv) > 2 else None
+            result = project_backend.delete_project(project_name)
+            print(result)
 
-        # Detect if argument is a file
-        if os.path.isfile(payload_arg):
-            try:
-                with open(payload_arg, "r", encoding="utf-8") as f:
-                    payload = json.load(f)
-            except json.JSONDecodeError as e:
-                print("Invalid JSON in file:", e)
-                sys.exit(1)
+        # ===== Node commands =====
+        elif command == "addnode":
+            payload = load_payload(sys.argv[2])
+            node_backend.add_node(payload, NODE_INDEX_PATH)
+
+        elif command == "updatenode":
+            payload = load_payload(sys.argv[2])
+            node_backend.update_node(payload, NODE_INDEX_PATH)
+
+        elif command == "deletenode":
+            node_backend.delete_node(sys.argv[2], NODE_INDEX_PATH)
+
+        elif command == "nodeindex":
+            node_backend.print_node_index(NODE_INDEX_PATH)
+
         else:
-            try:
-                payload = json.loads(payload_arg)
-            except json.JSONDecodeError as e:
-                print("Invalid JSON:", e)
-                sys.exit(1)
+            print(f"Unknown command '{command}'")
 
-
-        entity_type = payload.get("entity_type")
-        entity_id = payload.get("entity_id")
-        updates = payload.get("updates")
-        project_updates = payload.get("project_updates")
-
-        result = backend.update_project(   # call new ProjectManager method
-            project_name,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            updates=updates,
-            project_updates=project_updates
-        )
-        print(result)
-
-
-
-    elif command == "index":
-        result = backend.update_index()
-        print(result)
-
-    elif command == "delete":
-        if not project_name:
-            print("Usage: delete <project_name>")
-            sys.exit(1)
-        result = backend.delete_project(project_name)
-        print(result)
-
-    else:
-        print(f"Unknown command '{command}'. Available: init, save, index")
-
+    except Exception as e:
+        print("Error:", e)
 
 if __name__ == "__main__":
     main()

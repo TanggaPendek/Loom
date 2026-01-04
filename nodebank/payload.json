@@ -1,0 +1,10 @@
+{
+  "nodeId": "node_func_1",
+  "name": "Multiply Function",
+  "type": "custom",
+  "function_code": "def multiply(a, b):\n    return a * b",
+  "metadata": {
+    "author": "tester",
+    "description": "A simple multiply function"
+  }
+}
