@@ -46,3 +46,8 @@ class NodeLoader:
 
         print(f"\n[NodeLoader] Preloaded {len(self.loaded_nodes)} nodes.")
         return self.loaded_nodes
+
+
+
+
+#Automated Test Pending

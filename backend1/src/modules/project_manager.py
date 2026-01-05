@@ -158,3 +158,8 @@ class ProjectManager:
             json.dump(index, f, indent=4)
 
         return {"status": "success", "message": "Folder index updated."}
+
+
+
+
+#Automated Test Pending

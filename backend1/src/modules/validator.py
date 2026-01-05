@@ -96,3 +96,8 @@ class Validator:
 
         if not isinstance(payload["content"], (str, dict)):
             raise ValidationError("content must be string or dict")
+
+
+
+
+#UNTESTED

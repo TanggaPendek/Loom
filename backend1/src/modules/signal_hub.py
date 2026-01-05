@@ -79,3 +79,8 @@ class SignalHub:
     def registered_signals(self):
         """Return list of all signal names registered in this hub."""
         return list(self._listeners.keys())
+
+
+
+
+#UNTESTED

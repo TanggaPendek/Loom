@@ -67,3 +67,8 @@ class VariableManager:
         for var_name, val in zip(outputs, output_values):
             self.variables[var_name] = val
 
+
+
+
+
+#Automated Test Pending

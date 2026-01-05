@@ -46,7 +46,7 @@ class ExecutionManager:
     # ---------- Internal engine callback ----------
 
     def _engine_callback(self, event_type, data):
-        
+
         if event_type == "node_started":
             self.signalhub.emit("engine_node_started", data)
         elif event_type == "node_finished":
@@ -55,3 +55,8 @@ class ExecutionManager:
             self.signalhub.emit("engine_progress", data)
         elif event_type == "error":
             self.signalhub.emit("engine_error", data)
+
+
+
+
+#UNTESTED

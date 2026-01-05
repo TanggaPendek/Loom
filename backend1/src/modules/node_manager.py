@@ -134,3 +134,6 @@ class NodeManager:
             print("No node index found. Run addnode first.")
 
 
+
+
+#Automated Test Pending
