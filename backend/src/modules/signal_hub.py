@@ -1,4 +1,4 @@
-# executor/engine/engine_signal.py
+# modules/signal_hub.py
 import asyncio
 import logging
 from typing import Callable, Any, Optional, Dict, List
@@ -8,20 +8,20 @@ import inspect
 logger = logging.getLogger(__name__)
 
 
-class EngineSignalHub:
+class SignalHub:
     """
-    Executor Engine SignalHub with async/await support
+    Backend SignalHub with async/await support
     
-    Internal signal system for executor engine coordination. Similar to backend
-    SignalHub but focused on engine-specific signals.
+    A robust signal system for backend coordination with support for both
+    synchronous and asynchronous handlers, error isolation, and handler management.
     
     === Usage Notes ===
     
     **Basic Sync Usage:**
     ```python
-    hub = EngineSignalHub()
-    hub.on("node_loaded", lambda payload: print(f"Loaded: {payload}"))
-    hub.emit("node_loaded", {"nodeId": "n1"})
+    hub = SignalHub()
+    hub.on("project_init", lambda payload: print(f"Project: {payload}"))
+    hub.emit("project_init", {"projectName": "MyProject"})
     ```
     
     **Async Handler Usage:**
@@ -29,55 +29,75 @@ class EngineSignalHub:
     async def async_handler(payload):
         await some_async_operation(payload)
     
-    hub.on_async("node_loaded", async_handler)
-    await hub.emit_async("node_loaded", {"nodeId": "n1"})
+    hub.on_async("project_init", async_handler)
+    await hub.emit_async("project_init", {"projectName": "MyProject"})
     ```
     
     **Fire-and-Forget Async:**
     ```python
-    hub.emit_concurrent("node_loaded", {"nodeId": "n1"})
+    hub.emit_concurrent("project_init", {"projectName": "MyProject"})
     # Returns immediately, handlers run in background
     ```
     
-    === Executor Engine Signals ===
+    **Handler Management:**
+    ```python
+    def my_handler(payload): pass
+    hub.on("event", my_handler)
+    hub.off("event", my_handler)  # Unregister specific handler
+    hub.clear("event")  # Remove all handlers for event
+    ```
     
-    --- Node Loading ---
-    - "nodeloader_started"    : Node loading begins {count}
-    - "node_loading"          : Loading specific node {nodeId, name, progress}
-    - "node_loaded"           : Node loaded successfully {nodeId, name}
-    - "node_load_failed"      : Node load failed {nodeId, error}
-    - "nodeloader_completed"  : All nodes loaded {loaded_count, failed_count}
+    === Supported Signals ===
     
-    --- Variable Manager ---
-    - "varmanager_started"       : Variable initialization begins
-    - "varmanager_initialized"   : Initialization complete {variable_count}
-    - "variable_set"             : Variable changed {var_name, value}
+    --- Project-level ---
+    - "project_init"         : Emitted when a project is initialized
+    - "project_update"       : Emitted when a project is updated
+    - "project_delete"       : Emitted when a project is deleted
+    - "project_index_update" : Emitted when the project index is updated
+    - "project_index_updated": After index update completes
     
-    --- Virtual Environment ---
-    - "venv_check_started"       : Checking venv status
-    - "venv_creation_started"    : Creating new venv
-    - "venv_creation_completed"  : Venv created successfully
-    - "venv_install_started"     : Installing dependencies
-    - "venv_install_progress"    : Pip install progress {line}
-    - "venv_install_completed"   : Dependencies installed
-    - "venv_ready"               : Venv ready for use
-    - "venv_error"               : Venv operation failed {error, stage}
+    --- Node-level ---
+    - "node_add"             : Emitted when a node is added
+    - "node_update"          : Emitted when a node is updated
+    - "node_delete"          : Emitted when a node is deleted
+    - "node_index_updated"   : After node index update completes
     
-    --- Execution ---
-    - "engine_run"               : Engine starting execution {status}
-    - "engine_node_started"      : Node execution started {nodeId}
-    - "engine_node_finished"     : Node execution finished {nodeId, output}
-    - "engine_stop"              : Engine stopping {status}
-    - "engine_error"             : Engine error occurred {error}
-    - "engine_progress"          : Execution progress {current, total, percent}
+    --- Execution Coordination ---
+    - "initialization_started"   : Engine setup begins
+    - "initialization_progress"  : Progress updates during init
+    - "initialization_completed" : All setup complete
+    - "execution_started"        : Code execution starts
+    - "execution_progress"       : Execution progress updates
+    - "execution_finished"       : Execution completed
+    - "execution_error"          : Execution error occurred
+    - "execution_rejected"       : Execution request rejected
     
-    --- Error Handling ---
-    - "handler_error"            : Signal handler threw exception
+    --- Engine Control (Backend → Executor) ---
+    - "engine_run_request"   : Request engine to start
+    - "engine_stop_request"  : Request engine to stop
+    - "engine_run"           : Engine starting (from executor)
+    - "engine_stop"          : Engine stopping (from executor)
+    - "engine_finished"      : Engine completed (from executor)
+    - "engine_error"         : Engine error (from executor)
+    - "engine_progress"      : Engine progress (from executor)
+    
+    --- Persistence / File-level ---
+    - "file_save"            : Before saving a file (.json or .py)
+    - "file_loaded"          : After loading a file
+    - "file_error"           : File operation failed
+    
+    --- Validation / Errors ---
+    - "validation_error"     : Validator found invalid payload
+    - "handler_error"        : Signal handler threw exception
+    
+    --- UI / Frontend Feedback ---
+    - "toast_message"        : Generic message for frontend
+    - "highlight_node"       : Highlight/select a node in UI
     """
     
     def __init__(self, enable_logging: bool = False):
         """
-        Initialize EngineSignalHub.
+        Initialize SignalHub.
         
         Args:
             enable_logging: If True, log all signal emissions and handler errors
@@ -106,7 +126,7 @@ class EngineSignalHub:
         self._listeners[signal_name].append((handler, metadata))
         
         if self._enable_logging:
-            logger.info(f"[EngineSignalHub] Registered sync handler '{metadata['name']}' for signal '{signal_name}'")
+            logger.info(f"Registered sync handler '{metadata['name']}' for signal '{signal_name}'")
     
     def on_async(self, signal_name: str, async_handler: Callable[[Any], Any]) -> None:
         """
@@ -129,7 +149,7 @@ class EngineSignalHub:
         self._async_listeners[signal_name].append((async_handler, metadata))
         
         if self._enable_logging:
-            logger.info(f"[EngineSignalHub] Registered async handler '{metadata['name']}' for signal '{signal_name}'")
+            logger.info(f"Registered async handler '{metadata['name']}' for signal '{signal_name}'")
     
     def off(self, signal_name: str, handler: Callable) -> bool:
         """
@@ -150,7 +170,7 @@ class EngineSignalHub:
             ]
             if len(self._listeners[signal_name]) < original_length:
                 if self._enable_logging:
-                    logger.info(f"[EngineSignalHub] Unregistered sync handler from signal '{signal_name}'")
+                    logger.info(f"Unregistered sync handler from signal '{signal_name}'")
                 return True
         
         # Try async handlers
@@ -161,7 +181,7 @@ class EngineSignalHub:
             ]
             if len(self._async_listeners[signal_name]) < original_length:
                 if self._enable_logging:
-                    logger.info(f"[EngineSignalHub] Unregistered async handler from signal '{signal_name}'")
+                    logger.info(f"Unregistered async handler from signal '{signal_name}'")
                 return True
         
         return False
@@ -182,7 +202,7 @@ class EngineSignalHub:
             del self._async_listeners[signal_name]
         
         if self._enable_logging and removed_count > 0:
-            logger.info(f"[EngineSignalHub] Cleared {removed_count} handlers from signal '{signal_name}'")
+            logger.info(f"Cleared {removed_count} handlers from signal '{signal_name}'")
     
     def emit(self, signal_name: str, payload: Any = None) -> None:
         """
@@ -196,7 +216,7 @@ class EngineSignalHub:
             payload: Optional data to pass to handlers
         """
         if self._enable_logging:
-            logger.debug(f"[EngineSignalHub] Emitting signal '{signal_name}' with payload: {payload}")
+            logger.debug(f"Emitting signal '{signal_name}' with payload: {payload}")
         
         handlers = self._listeners.get(signal_name, [])
         for handler, metadata in handlers:
@@ -204,7 +224,7 @@ class EngineSignalHub:
                 handler(payload)
             except Exception as e:
                 handler_name = metadata.get("name", "unknown")
-                logger.error(f"[EngineSignalHub] Error in sync handler '{handler_name}' for signal '{signal_name}': {e}")
+                logger.error(f"Error in sync handler '{handler_name}' for signal '{signal_name}': {e}")
                 # Emit handler_error signal (but avoid infinite recursion)
                 if signal_name != "handler_error":
                     self.emit("handler_error", {
@@ -228,7 +248,7 @@ class EngineSignalHub:
             payload: Optional data to pass to handlers
         """
         if self._enable_logging:
-            logger.debug(f"[EngineSignalHub] Async emitting signal '{signal_name}' with payload: {payload}")
+            logger.debug(f"Async emitting signal '{signal_name}' with payload: {payload}")
         
         # Execute sync handlers first
         self.emit(signal_name, payload)
@@ -241,7 +261,7 @@ class EngineSignalHub:
                     await handler(payload)
                 except Exception as e:
                     handler_name = metadata.get("name", "unknown")
-                    logger.error(f"[EngineSignalHub] Error in async handler '{handler_name}' for signal '{signal_name}': {e}")
+                    logger.error(f"Error in async handler '{handler_name}' for signal '{signal_name}': {e}")
                     if signal_name != "handler_error":
                         self.emit("handler_error", {
                             "signal": signal_name,
@@ -265,7 +285,7 @@ class EngineSignalHub:
             payload: Optional data to pass to handlers
         """
         if self._enable_logging:
-            logger.debug(f"[EngineSignalHub] Concurrent emitting signal '{signal_name}' with payload: {payload}")
+            logger.debug(f"Concurrent emitting signal '{signal_name}' with payload: {payload}")
         
         # Execute sync handlers immediately
         self.emit(signal_name, payload)
@@ -279,7 +299,7 @@ class EngineSignalHub:
                 loop.create_task(self._execute_async_handlers(signal_name, async_handlers, payload))
             except RuntimeError:
                 # No event loop running, log warning
-                logger.warning(f"[EngineSignalHub] Cannot emit async handlers for '{signal_name}': no event loop running")
+                logger.warning(f"Cannot emit async handlers for '{signal_name}': no event loop running")
     
     async def _execute_async_handlers(self, signal_name: str, handlers: List[tuple], payload: Any) -> None:
         """Helper to execute async handlers with error handling."""
@@ -288,7 +308,7 @@ class EngineSignalHub:
                 await handler(payload)
             except Exception as e:
                 handler_name = metadata.get("name", "unknown")
-                logger.error(f"[EngineSignalHub] Error in async handler '{handler_name}' for signal '{signal_name}': {e}")
+                logger.error(f"Error in async handler '{handler_name}' for signal '{signal_name}': {e}")
                 if signal_name != "handler_error":
                     self.emit("handler_error", {
                         "signal": signal_name,

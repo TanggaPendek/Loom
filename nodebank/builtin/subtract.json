@@ -1,0 +1,22 @@
+{
+    "nodeId": "subtract",
+    "name": "subtract",
+    "ref": "builtin",
+    "metadata": {
+        "description": "Subtracts second number from first",
+        "category": "Math"
+    },
+    "input": [
+        {
+            "name": "a",
+            "type": "number"
+        },
+        {
+            "name": "b",
+            "type": "number"
+        }
+    ],
+    "output": [
+        "result"
+    ]
+}

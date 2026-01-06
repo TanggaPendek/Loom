@@ -1,0 +1,22 @@
+{
+    "nodeId": "add",
+    "name": "add",
+    "ref": "builtin",
+    "metadata": {
+        "description": "Adds two numbers",
+        "category": "Math"
+    },
+    "input": [
+        {
+            "name": "a",
+            "type": "number"
+        },
+        {
+            "name": "b",
+            "type": "number"
+        }
+    ],
+    "output": [
+        "result"
+    ]
+}

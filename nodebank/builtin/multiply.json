@@ -1,0 +1,22 @@
+{
+    "nodeId": "multiply",
+    "name": "multiply",
+    "ref": "builtin",
+    "metadata": {
+        "description": "Multiplies two numbers",
+        "category": "Math"
+    },
+    "input": [
+        {
+            "name": "a",
+            "type": "number"
+        },
+        {
+            "name": "b",
+            "type": "number"
+        }
+    ],
+    "output": [
+        "result"
+    ]
+}

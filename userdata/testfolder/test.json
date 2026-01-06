@@ -1,12 +1,11 @@
 {
-  "projectId": "proj_123",
-  "projectName": "Demo Graph Project",
-  "projectPath": "/userdata/test.json",
+  "projectId": "proj_loop",
+  "projectName": "Dynamic Loop Project",
+  "projectPath": "/userdata/test_loop.json",
   "metadata": {
     "author": "TanggaPendek",
-    "description": "Three-node demo: input → add → print",
-    "createdAt": "2025-12-16T06:00:00Z",
-    "lastModified": "2025-12-16T06:05:00Z"
+    "description": "Loop 1+1 until 1000 using self-routing add node",
+    "createdAt": "2026-01-07T02:00:00Z"
   },
   "nodes": [
     {
@@ -15,7 +14,7 @@
       "name": "input_node",
       "position": { "x": 100.0, "y": 200.0 },
       "input": [
-        { "value": 10 }
+        { "value": 0 }
       ],
       "output": ["out_1"],
       "ref": "builtin",
@@ -24,23 +23,36 @@
     {
       "nodeId": "node_2",
       "positionId": "pos_2",
-      "name": "add_node",
+      "name": "condition_node",
       "position": { "x": 350.0, "y": 200.0 },
       "input": [
         { "var": "out_1" },
-        { "value": 5 }
+        { "value": 1000 }
       ],
       "output": ["out_2"],
       "ref": "builtin",
-      "metadata": { "operation": "add" }
+      "metadata": { "operation": "condition", "loop": true }
     },
     {
       "nodeId": "node_3",
       "positionId": "pos_3",
-      "name": "print_node",
+      "name": "add_node",
       "position": { "x": 600.0, "y": 200.0 },
       "input": [
-        { "var": "out_2" }
+        { "var": "out_1" },
+        { "value": 1 }
+      ],
+      "output": ["out_1"],
+      "ref": "builtin",
+      "metadata": { "operation": "add" }
+    },
+    {
+      "nodeId": "node_4",
+      "positionId": "pos_4",
+      "name": "print_node",
+      "position": { "x": 850.0, "y": 200.0 },
+      "input": [
+        { "var": "out_1" }
       ],
       "output": [],
       "ref": "builtin",
@@ -62,7 +74,23 @@
       "sourceOutput": "out_2",
       "targetNodeId": "node_3",
       "targetInput": "var_1",
-      "metadata": { "label": "data_flow" }
+      "metadata": { "label": "true_path" }
+    },
+    {
+      "connectionId": "conn_3",
+      "sourceNodeId": "node_3",
+      "sourceOutput": "out_1",
+      "targetNodeId": "node_2",
+      "targetInput": "var_1",
+      "metadata": { "label": "loop_back" }
+    },
+    {
+      "connectionId": "conn_4",
+      "sourceNodeId": "node_2",
+      "sourceOutput": "out_2",
+      "targetNodeId": "node_4",
+      "targetInput": "var_1",
+      "metadata": { "label": "false_path" }
     }
   ]
 }

@@ -1,33 +1,82 @@
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
+
+# User data (project files)
+userdata/
+userfolder/
+# Keep test data structure
+!userdata/.gitkeep
+!userdata/TestProject/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+*/venv/
+userdata/*/venv/
+**/venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+ehthumbs.db
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.venv/
-venv/
-env/
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.spec
 
-# Node
+# Node/Frontend 
 node_modules/
 dist/
 build/
-
-# Logs
-*.log
-
-# User data
-userfolder/
-codebank/custom/
-*.savefile
-
-# IDE/Editor
-.vscode/
-.idea/
+.next/
+.cache/
+.parcel-cache/
+out/
 
 # Docker
 *.pid
 *.sock
+
+# Environment
+.env.local
+.env.*.local
+.env.backup
+
+# Misc
+*.bak
+*.tmp
+*.swp
+.DS_Store?
