@@ -19,7 +19,7 @@ from executor.engine.execution_manager import ExecutionManager
 from executor.engine.venv_handlers import VenvManager
 
 USERDATA_PATH = ROOT_DIR / "userdata"
-CURRENT_PATH = USERDATA_PATH / "current.json"
+CURRENT_PATH = USERDATA_PATH / "state.json"
 
 def read_current():
     if not CURRENT_PATH.exists():

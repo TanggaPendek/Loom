@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, Optional, Any
 from executor.engine.engine_signal import EngineSignalHub
 
-CURRENT_PATH = Path(__file__).parent.parent.parent / "userdata" / "current.json"
+CURRENT_PATH = Path(__file__).parent.parent.parent / "userdata" / "state.json"
 
 def read_current():
     if not CURRENT_PATH.exists():

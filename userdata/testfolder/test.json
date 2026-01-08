@@ -15,7 +15,7 @@
       "name": "condition_node",
       "input": [
         { "var": "out_1" },
-        { "value": 100 }
+        { "value": 1000 }
       ],
       "output": ["out_2"],
       "metadata": { "operation": "condition" }

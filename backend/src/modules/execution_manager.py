@@ -25,19 +25,40 @@ class ExecutionManager:
         signal_hub.on("engine_run_request", self.on_run_request)
         signal_hub.on("engine_stop_request", self.on_stop_request)
         signal_hub.on("engine_force_stop_request", self.on_force_stop_request)
+        signal_hub.on("clean_all_venvs_request", self.on_clean_all_request)
+
+    def on_clean_all_request(self, payload=None):
+        if self.running:
+            self.signal_hub.emit("cleaner_error", {"reason": "cannot_clean_while_engine_running"})
+            return
+
+        from backend.src.modules.cleaner import VenvCleaner
+        try:
+            count = VenvCleaner.clean_all_venvs()
+            self.signal_hub.emit("cleaner_success", {
+                "message": f"Successfully wiped {count} virtual environments.",
+                "count": count
+            })
+        except Exception as e:
+            self.signal_hub.emit("cleaner_error", {"error": str(e)})
 
     def on_run_request(self, payload=None):
         if self.running:
             self.signal_hub.emit("execution_rejected", {"reason": "already_running"})
             return
 
-        # Get active project from current.json
+        # 1. Get active project
         project_manager = ProjectManager()
         current = project_manager.read_current()
         if not current:
             self.signal_hub.emit("execution_error", {"error": "No current project selected"})
             return
 
+        # 2. TRIGGER FIFO CLEANING (Golden Rule)
+        from backend.src.modules.cleaner import VenvCleaner
+        VenvCleaner.run_fifo_clean(current["projectId"], current["projectPath"])
+
+        # 3. Launch Process logic starts here...
         graph_path = Path(current["projectPath"])
         if not graph_path.exists():
             self.signal_hub.emit("execution_error", {"error": f"Graph not found: {graph_path}"})
