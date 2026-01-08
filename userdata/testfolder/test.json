@@ -27,7 +27,7 @@
       "position": { "x": 350.0, "y": 200.0 },
       "input": [
         { "var": "out_1" },
-        { "value": 1000 }
+        { "value": 10 }
       ],
       "output": ["out_2"],
       "ref": "builtin",

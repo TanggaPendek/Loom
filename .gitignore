@@ -10,8 +10,9 @@ coverage.xml
 # User data (project files)
 userdata/
 userfolder/
-# Keep test data structure
+# Keep test data structure and current.json
 !userdata/.gitkeep
+!userdata/current.json
 !userdata/TestProject/
 
 # Virtual environments

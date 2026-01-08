@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 from executor.engine.engine_signal import EngineSignalHub
 from executor.engine.node_loader import NodeLoader
 from executor.engine.variable_manager import VariableManager
-from executor.engine.venv_manager import VenvManager
+from executor.engine.venv_handlers import VenvManager
 
 
 class ExecutionManager:
@@ -15,7 +15,14 @@ class ExecutionManager:
     Handles dynamic execution including loops and condition nodes.
     """
 
-    def __init__(self, nodes=None, loaded_nodes=None, variable_manager=None, connections=None, signal_hub: Optional[EngineSignalHub] = None):
+    def __init__(
+        self,
+        nodes=None,
+        loaded_nodes=None,
+        variable_manager=None,
+        connections=None,
+        signal_hub: Optional[EngineSignalHub] = None,
+    ):
         self.signal_hub = signal_hub
         self.connections = connections or []
         self.stopped = False
@@ -33,13 +40,18 @@ class ExecutionManager:
         if signal_hub:
             signal_hub.on("engine_stop", self.on_stop_request)
 
-    async def initialize_async(self, nodes: List[dict], nodebank_path: str, project_path: Optional[Path] = None) -> None:
+    async def initialize_async(
+        self, nodes: List[dict], nodebank_path: str, project_path: Optional[Path] = None
+    ) -> None:
         if self.signal_hub:
-            self.signal_hub.emit("engine_progress", {
-                "phase": "initialization",
-                "status": "started",
-                "message": "Initializing NodeLoader, VariableManager, and VenvManager..."
-            })
+            self.signal_hub.emit(
+                "engine_progress",
+                {
+                    "phase": "initialization",
+                    "status": "started",
+                    "message": "Initializing NodeLoader, VariableManager, and VenvManager...",
+                },
+            )
 
         node_loader = NodeLoader(nodebank_path, self.signal_hub)
         var_mgr = VariableManager(self.signal_hub)
@@ -62,15 +74,20 @@ class ExecutionManager:
             self.dependencies = self._build_dependencies()
 
             if self.signal_hub:
-                self.signal_hub.emit("engine_progress", {
-                    "phase": "initialization",
-                    "status": "completed",
-                    "message": f"Initialization complete: {len(self.loaded_nodes)} nodes loaded"
-                })
+                self.signal_hub.emit(
+                    "engine_progress",
+                    {
+                        "phase": "initialization",
+                        "status": "completed",
+                        "message": f"Initialization complete: {len(self.loaded_nodes)} nodes loaded",
+                    },
+                )
 
         except Exception as e:
             if self.signal_hub:
-                self.signal_hub.emit("engine_error", {"phase": "initialization", "error": str(e)})
+                self.signal_hub.emit(
+                    "engine_error", {"phase": "initialization", "error": str(e)}
+                )
             raise
 
     def _build_dependencies(self) -> Dict[str, set]:
@@ -97,6 +114,7 @@ class ExecutionManager:
             queue = deque()
             executed_count = 0
             max_iterations = 100_000
+            executed_nodes = set()  # track non-loop nodes
 
             # Nodes with no input vars are ready first
             for node_id, node in self.nodes.items():
@@ -110,9 +128,15 @@ class ExecutionManager:
                 if not func:
                     raise RuntimeError(f"Node function not loaded for {node_id}")
 
+                # Skip already executed one-time nodes
+                if node_id in executed_nodes and not node.get("metadata", {}).get("loop", False):
+                    continue
+
                 if self.stopped:
                     if self.signal_hub:
-                        self.signal_hub.emit("engine_stop", {"status": "cancelled", "completed": executed_count})
+                        self.signal_hub.emit(
+                            "engine_stop", {"status": "cancelled", "completed": executed_count}
+                        )
                     return
 
                 if self.signal_hub:
@@ -120,20 +144,27 @@ class ExecutionManager:
 
                 inputs = self.var_mgr.get_input(node)
                 loop = asyncio.get_event_loop()
+                # Run node function inside venv or executor
                 output = await loop.run_in_executor(None, func, inputs, self.var_mgr.variables)
                 self.var_mgr.set_output(node_id, output)
 
-                if self.signal_hub:
-                    self.signal_hub.emit("engine_node_finished", {"nodeId": node_id, "output": output})
-                    self.signal_hub.emit("engine_progress", {
-                        "phase": "execution",
-                        "current": executed_count + 1,
-                        "percent": 0
-                    })
+                # Mark non-loop nodes as executed
+                if not node.get("metadata", {}).get("loop", False):
+                    executed_nodes.add(node_id)
 
                 executed_count += 1
 
-                # Enqueue next nodes based on input readiness and condition
+                if self.signal_hub:
+                    percent = int((executed_count / len(self.nodes)) * 100)
+                    self.signal_hub.emit(
+                        "engine_node_finished", {"nodeId": node_id, "output": output}
+                    )
+                    self.signal_hub.emit(
+                        "engine_progress",
+                        {"phase": "execution", "current": executed_count, "percent": percent},
+                    )
+
+                # Enqueue next nodes
                 for conn in self.connections:
                     if conn["sourceNodeId"] != node_id:
                         continue
@@ -141,26 +172,35 @@ class ExecutionManager:
                     next_node_id = conn["targetNodeId"]
                     next_node = self.nodes[next_node_id]
 
-                    # Condition node routing
+                    # Handle condition node routing
                     if node.get("metadata", {}).get("operation") == "condition":
+                        output_bool = bool(output)  # enforce True/False
                         label = conn.get("metadata", {}).get("label", "")
-                        if output and "true_path" not in label:
+                        if output_bool and "true_path" not in label:
                             continue
-                        if not output and "false_path" not in label:
+                        if not output_bool and "false_path" not in label:
                             continue
 
-                    # Check if all input vars are ready
+                    # Check if all input vars ready
                     all_inputs_ready = True
                     for inp in next_node.get("input", []):
                         if "var" in inp and inp["var"] not in self.var_mgr.variables:
                             all_inputs_ready = False
                             break
 
-                    if all_inputs_ready and next_node_id not in queue:
+                    if all_inputs_ready and (
+                        next_node_id not in queue
+                        and (
+                            next_node_id not in executed_nodes
+                            or next_node.get("metadata", {}).get("loop", False)
+                        )
+                    ):
                         queue.append(next_node_id)
 
             if executed_count >= max_iterations:
-                raise RuntimeError("Maximum iteration limit reached; possible infinite loop")
+                raise RuntimeError(
+                    "Maximum iteration limit reached; possible infinite loop"
+                )
 
             if self.signal_hub:
                 self.signal_hub.emit("engine_stop", {"status": "finished"})
@@ -170,6 +210,7 @@ class ExecutionManager:
                 self.signal_hub.emit("engine_error", {"error": str(e)})
             raise e
 
+    # Optional linear run (no loops/conditions)
     def run_linear(self) -> None:
         if self.signal_hub:
             self.signal_hub.emit("engine_run", {"status": "started"})
@@ -187,7 +228,9 @@ class ExecutionManager:
                 output = func(inputs, self.var_mgr.variables)
                 self.var_mgr.set_output(node_id, output)
                 if self.signal_hub:
-                    self.signal_hub.emit("engine_node_finished", {"nodeId": node_id, "output": output})
+                    self.signal_hub.emit(
+                        "engine_node_finished", {"nodeId": node_id, "output": output}
+                    )
 
             if self.signal_hub:
                 self.signal_hub.emit("engine_stop", {"status": "finished"})

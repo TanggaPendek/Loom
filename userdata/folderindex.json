@@ -30,5 +30,14 @@
         "author": "author",
         "lastModified": "2026-01-06T19:07:35.888515Z",
         "projectPath": "G:\\Github\\Loom\\Loom\\userdata\\TestProject_1\\savefile.json"
+    },
+
+    {
+        "projectId": "proj_006",
+        "projectName": "testfolder",
+        "description": "A test project",
+        "author": "author",
+        "lastModified": "2026-01-06T19:07:35.888515Z",
+        "projectPath": "G:\\Github\\Loom\\Loom\\userdata\\testfolder\\savefile.json"
     }
 ]

@@ -4,10 +4,15 @@ import sys
 import os
 import asyncio
 from pathlib import Path
-from dotenv import load_dotenv
 from typing import Optional
-from executor.engine.engine_signal import EngineSignalHub
 
+try:
+    from dotenv import load_dotenv
+    HAS_DOTENV = True
+except ImportError:
+    HAS_DOTENV = False
+
+from executor.engine.engine_signal import EngineSignalHub
 
 
 class VenvManager:
@@ -29,11 +34,10 @@ class VenvManager:
         self.signal_hub = signal_hub
 
         # Load project-specific .env if it exists
-        project_env = self.project_path / ".env"
-        if project_env.exists():
-            load_dotenv(project_env)
-        else:
-            print(f"[VenvManager] No project .env found, using defaults.")
+        if HAS_DOTENV:
+            project_env = self.project_path / ".env"
+            if project_env.exists():
+                load_dotenv(project_env)
 
     async def ensure_venv_async(self, timeout: int = 300) -> None:
         """
@@ -53,8 +57,6 @@ class VenvManager:
             # Create venv if it doesn't exist
             if not self.venv_path.exists():
                 await self._create_venv_async()
-            else:
-                print(f"[VenvManager] Virtual environment already exists at {self.venv_path}")
             
             # Install requirements
             await asyncio.wait_for(
@@ -67,7 +69,6 @@ class VenvManager:
                 
         except asyncio.TimeoutError:
             error_msg = f"Venv operations exceeded {timeout}s timeout"
-            print(f"[VenvManager ERROR] {error_msg}")
             if self.signal_hub:
                 self.signal_hub.emit("venv_error", {
                     "error": error_msg,
@@ -75,7 +76,6 @@ class VenvManager:
                 })
             raise
         except Exception as e:
-            print(f"[VenvManager ERROR] {e}")
             if self.signal_hub:
                 self.signal_hub.emit("venv_error", {
                     "error": str(e),
@@ -124,7 +124,7 @@ class VenvManager:
         
         print(f"[VenvManager] Installing project dependencies from {req_file}")
         
-        # Run pip install as subprocess with streaming output
+        # Run pip install as subprocess
         process = await asyncio.create_subprocess_exec(
             str(self.python_executable), "-m", "pip", "install", "-r", str(req_file),
             stdout=asyncio.subprocess.PIPE,
@@ -137,10 +137,8 @@ class VenvManager:
             if not line:
                 break
             line_str = line.decode().strip()
-            if line_str:
-                print(f"[pip] {line_str}")
-                if self.signal_hub:
-                    self.signal_hub.emit("venv_install_progress", {"line": line_str})
+            if line_str and self.signal_hub:
+                self.signal_hub.emit("venv_install_progress", {"line": line_str})
         
         await process.wait()
         
@@ -161,8 +159,6 @@ class VenvManager:
         if not self.venv_path.exists():
             print(f"[VenvManager] Creating virtual environment at {self.venv_path}")
             subprocess.run([sys.executable, "-m", "venv", str(self.venv_path)], check=True)
-        else:
-            print(f"[VenvManager] Virtual environment already exists at {self.venv_path}")
 
     def install_requirements(self) -> None:
         """Install requirements (synchronous wrapper)."""
@@ -170,8 +166,6 @@ class VenvManager:
         if req_file.exists():
             print(f"[VenvManager] Installing project dependencies from {req_file}")
             subprocess.run([str(self.python_executable), "-m", "pip", "install", "-r", str(req_file)], check=True)
-        else:
-            print(f"[VenvManager] No requirements.txt found, skipping installation")
 
     def run_in_venv(self, script_path: Path, args=None) -> None:
         """
@@ -196,3 +190,20 @@ class VenvManager:
             Path to python executable
         """
         return self.python_executable
+
+    async def run_in_venv_async(self, func, args=None):
+        """
+        Run a coroutine/function inside the venv asynchronously.
+        For coroutine functions, await them. For sync functions, run in executor.
+        """
+        if args is None:
+            args = []
+
+        # Ensure venv exists first
+        await self.ensure_venv_async()
+
+        if asyncio.iscoroutinefunction(func):
+            return await func(*args)
+        else:
+            loop = asyncio.get_running_loop()
+            return await loop.run_in_executor(None, func, *args)

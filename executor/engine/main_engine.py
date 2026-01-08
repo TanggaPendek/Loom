@@ -4,52 +4,69 @@ import json
 import asyncio
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 
-# Add root to path for imports
+try:
+    from dotenv import load_dotenv
+    HAS_DOTENV = True
+except ImportError:
+    HAS_DOTENV = False
+    print("[INFO] python-dotenv not installed, using environment variables only")
+
+# Add root for imports
 ROOT_DIR = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
 from executor.engine.engine_signal import EngineSignalHub
 from executor.engine.execution_manager import ExecutionManager
+from executor.engine.venv_handlers import VenvManager
 
+# ===== Paths for current project =====
+USERDATA_PATH = ROOT_DIR / "userdata"
+CURRENT_PATH = USERDATA_PATH / "current.json"
+
+def read_current():
+    """Read the active project from current.json"""
+    if not CURRENT_PATH.exists():
+        print("[ENGINE] current.json not found")
+        return None
+    try:
+        with open(CURRENT_PATH, "r", encoding="utf-8-sig") as f:
+            return json.load(f)  # stores a single object
+    except Exception as e:
+        print(f"[ENGINE ERROR] Failed to read current.json: {e}")
+        return None
 
 async def main_async():
     """Main async entry point for the executor engine."""
-    load_dotenv()
+    if HAS_DOTENV:
+        load_dotenv()
 
-    if len(sys.argv) < 2:
-        print("Usage: python -m executor.engine.main_engine <graph.json>")
+    # Read current project
+    current = read_current()
+    if not current:
+        print("[ENGINE] No active project found in current.json")
         sys.exit(1)
 
-    graph_path = Path(sys.argv[1])
+    graph_path = Path(current["projectPath"])
     if not graph_path.exists():
-        print(f"[ERROR] Graph file not found: {graph_path}")
+        print(f"[ENGINE] Graph file not found: {graph_path}")
         sys.exit(1)
 
-    with graph_path.open("r", encoding="utf-8") as f:
-        graph = json.load(f)
-
-    nodes = graph.get("nodes", [])
-    connections = graph.get("connections", [])
+    project_path = graph_path.parent
     nodebank_path = os.getenv("NODEBANK_PATH", "nodebank")
-    project_path = graph_path.parent  # Project path is where the graph.json is
 
-    # Create signal hub with logging enabled in debug mode
+    # -----------------------------
+    # Initialize signal hub
+    # -----------------------------
     debug_mode = os.getenv("DEBUG", "False").lower() == "true"
     signal_hub = EngineSignalHub(enable_logging=debug_mode)
 
-    # Register signal listeners for logging
     if debug_mode:
+        # example signals for debugging
         signal_hub.on("nodeloader_started", lambda p: print(f"[SIGNAL] nodeloader_started: {p}"))
         signal_hub.on("node_loaded", lambda p: print(f"[SIGNAL] node_loaded: {p['nodeId']}"))
-        signal_hub.on("nodeloader_completed", lambda p: print(f"[SIGNAL] nodeloader_completed: {p}"))
-        
-        signal_hub.on("varmanager_started", lambda p: print(f"[SIGNAL] varmanager_started"))
         signal_hub.on("varmanager_initialized", lambda p: print(f"[SIGNAL] varmanager_initialized: {p}"))
-        
-        signal_hub.on("venv_ready", lambda p: print(f"[SIGNAL] venv_ready"))
-        
+        signal_hub.on("venv_ready", lambda p: print(f"[SIGNAL] venv_ready: {p}"))
         signal_hub.on("engine_run", lambda p: print(f"[SIGNAL] engine_run: {p}"))
         signal_hub.on("engine_node_started", lambda p: print(f"[SIGNAL] node_started: {p['nodeId']}"))
         signal_hub.on("engine_node_finished", lambda p: print(f"[SIGNAL] node_finished: {p['nodeId']}"))
@@ -57,17 +74,29 @@ async def main_async():
         signal_hub.on("engine_stop", lambda p: print(f"[SIGNAL] engine_stop: {p}"))
         signal_hub.on("engine_error", lambda p: print(f"[SIGNAL] engine_error: {p}"))
 
-    # Create execution manager
+    # -----------------------------
+    # Load project JSON (graph)
+    # -----------------------------
+    with graph_path.open("r", encoding="utf-8-sig") as f:
+        graph = json.load(f)
+
+    nodes = graph.get("nodes", [])
+    connections = graph.get("connections", [])
+    
+    print(f"\n[ENGINE] Running project: {current.get('projectName')}")
+    print(f"[ENGINE] Nodes: {len(nodes)}, Connections: {len(connections)}")
+
+    # -----------------------------
+    # Initialize ExecutionManager
+    # This handles NodeLoader, VenvManager, and VariableManager concurrently
+    # -----------------------------
     exec_mgr = ExecutionManager(
-        nodes=None,  # Will be set by initialize_async
+        nodes=None,  # will be set during initialize_async
         connections=connections,
         signal_hub=signal_hub
     )
 
     print(f"\n[ENGINE] Starting async initialization...")
-    print(f"[ENGINE] Nodes: {len(nodes)}, Connections: {len(connections)}")
-    
-    # Initialize components concurrently (NodeLoader, VenvManager, VariableManager)
     await exec_mgr.initialize_async(
         nodes=nodes,
         nodebank_path=nodebank_path,
@@ -75,13 +104,10 @@ async def main_async():
     )
 
     print(f"\n[ENGINE] Initialization complete, starting execution...")
-    
-    # Run execution asynchronously
-    await exec_mgr.run_async()
+    await exec_mgr.run_async()  # runs the nodes / updates variables
 
     print("\n[ENGINE] Final variables:", exec_mgr.var_mgr.variables)
     print("[ENGINE] Done.")
-
 
 def main():
     """Synchronous wrapper for main_async."""
@@ -96,6 +122,8 @@ def main():
         traceback.print_exc()
         sys.exit(1)
 
-
+# main_engine.py
 if __name__ == "__main__":
-    main()
+    print("[ENGINE] Starting engine…")
+    sys.stdout.flush()  # force immediate flush so Popen reads it
+    main()  # your main function
