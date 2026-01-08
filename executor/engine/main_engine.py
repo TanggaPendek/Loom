@@ -109,6 +109,15 @@ async def main_async():
     print("\n[ENGINE] Final variables:", exec_mgr.var_mgr.variables)
     print("[ENGINE] Done.")
 
+async def check_parent_alive():
+    """If the parent process (UI) dies, shut down the engine immediately."""
+    while True:
+        await asyncio.sleep(2)
+        # On many systems, if the parent process dies, ppid becomes 1 (init)
+        if os.getppid() == 1: 
+            print("[ENGINE] Parent process lost. Shutting down...")
+            os._exit(1) # Forceful exit
+
 def main():
     """Synchronous wrapper for main_async."""
     try:
