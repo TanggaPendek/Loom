@@ -4,7 +4,7 @@
   "projectPath": "/userdata/test_loop.json",
   "metadata": {
     "author": "TanggaPendek",
-    "description": "Loop 1+1 until 1000 using self-routing add node",
+    "description": "Loop 1+1 until 10 using self-routing add node",
     "createdAt": "2026-01-07T02:00:00Z"
   },
   "nodes": [
