@@ -1,10 +1,21 @@
 import { useState } from 'react'
 import './App.css'
 import Canvas from './components/canvas1'
-import Sidebar from './components/sidebar'
+import Sidebar from './components/sidebar/Sidebar.jsx'
+import { useEffect } from 'react';
+import { initProject } from "./api/commands.jsx"; // Added .js and specific file
+import EngineButton from "./components/engine_button.jsx"; // Added .jsx
 
 function App() {
   const [count, setCount] = useState(0)
+  
+useEffect(() => {
+    // When the app starts, tell Python to get the settings ready
+    initProject().then(data => {
+      console.log("Backend Initialized:", data);
+      // Later: save this data to your state
+    });
+  }, []);
 
   return (
     <div className="h-screen w-screen grid" style={{ gridTemplateColumns: '250px 1fr 300px' }}>
@@ -24,6 +35,7 @@ function App() {
       {/* Right Sidebar */}
       <aside className="p-4 border-l border-gray-700">
         <p>Properties / Settings</p>
+        <EngineButton />
       </aside>
 
     </div>

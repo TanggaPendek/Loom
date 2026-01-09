@@ -78,20 +78,30 @@ def get_startup_payload():
         "setting": USERDATA_PATH / "setting.json",
         "current": USERDATA_PATH / "current.json",
         "project_index": USERDATA_PATH / "projectindex.json",
-        "node_index": NODE_INDEX_PATH
+        "node_index": NODE_INDEX_PATH  # This is a Path object
     }
     result = {}
     for key, path in files.items():
         if path.is_file():
-            with open(path, "r", encoding="utf-8-sig") as f:
-                result[key] = json.load(f)
+            try:
+                with open(path, "r", encoding="utf-8-sig") as f:
+                    result[key] = json.load(f)
+            except Exception as e:
+                print(f"Error reading {key}: {e}")
+                result[key] = None
         else:
             result[key] = None
     return result
-
 # ===== 6. WEB SERVER (FASTAPI) =====
 app = FastAPI(title="Loom Offline Backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+def get_node_index():
+    path = os.path.join("root", "nodebank", "nodeindex.json")
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            return json.load(f)
+    return []
 
 @app.get("/startup")
 async def startup():
