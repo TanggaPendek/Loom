@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import Canvas from './components/canvas1'
+import Canvas from './components/canvas/canvas.jsx'
 import Sidebar from './components/sidebar/Sidebar.jsx'
 import { useEffect } from 'react';
 import { initProject } from "./api/commands.jsx"; // Added .js and specific file

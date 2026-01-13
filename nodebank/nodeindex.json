@@ -1,47 +1,66 @@
 [
     {
-        "nodeId": "node_func_1",
-        "name": "Multiply Function",
-        "type": "custom",
-        "metadata": {
-            "author": "tester",
-            "description": "A simple multiply function"
+        "nodeId": "add_node_add_node",
+        "name": "Add",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+        "entryFunction": "add_node",
+        "dynamic": {
+            "inputs": [
+                "inputs",
+                "variables"
+            ],
+            "outputs": [
+                "return_value"
+            ]
         }
     },
     {
-        "nodeId": "node_func_1_1",
-        "name": "Multiply Function",
-        "type": "custom",
-        "metadata": {
-            "author": "tester",
-            "description": "A simple multiply function"
+        "nodeId": "condition_node_condition_node",
+        "name": "Condition",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\condition_node.py",
+        "entryFunction": "condition_node",
+        "dynamic": {
+            "inputs": [
+                "inputs",
+                "variables"
+            ],
+            "outputs": [
+                "return_value"
+            ]
         }
     },
     {
-        "nodeId": "node_func_1_2",
-        "name": "Multiply Function",
-        "type": "custom",
-        "metadata": {
-            "author": "tester",
-            "description": "A simple multiply function"
+        "nodeId": "input_node_input_node",
+        "name": "Input",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\input_node.py",
+        "entryFunction": "input_node",
+        "dynamic": {
+            "inputs": [
+                "inputs",
+                "variables"
+            ],
+            "outputs": [
+                "return_value"
+            ]
         }
     },
     {
-        "nodeId": "node_func_1_3",
-        "name": "Multiply Function",
-        "type": "custom",
-        "metadata": {
-            "author": "tester",
-            "description": "A simple multiply function"
-        }
-    },
-    {
-        "nodeId": "node_func_1_4",
-        "name": "Multiply Function",
-        "type": "custom",
-        "metadata": {
-            "author": "tester",
-            "description": "A simple multiply function"
+        "nodeId": "print_node_print_node",
+        "name": "Print",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\print_node.py",
+        "entryFunction": "print_node",
+        "dynamic": {
+            "inputs": [
+                "inputs",
+                "variables"
+            ],
+            "outputs": [
+                "return_value"
+            ]
         }
     }
 ]

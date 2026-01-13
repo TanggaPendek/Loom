@@ -1,26 +1,29 @@
-import { request } from './client';
+import { request, get } from "./client";
 
-
-// --- ENGINE ---
+/* ---------- ENGINE (Actions) ---------- */
 export const runEngine = () => request("run");
 export const stopEngine = () => request("stop");
 export const forceStop = () => request("force_stop");
 
-// --- PROJECT ---
+/* ---------- DATA FETCHING (Sync) ---------- */
+// These now use the 'get' helper and the dynamic /sync/ path
+export const getStartupData = () => get("/sync/startup");
+export const loadGraph = () => get("/sync/load_graph");
+
+/* ---------- PROJECT (Actions) ---------- */
 export const initProject = () => request("init");
-export const createProject = (name) => request("create", { name });
-export const deleteProject = (id) => request("delete", { id });
+export const createProject = (data) => request("project_create", data);
+export const deleteProject = (projectId) => request("project_delete", { projectId });
 
-// --- NODES ---
-export const addNode = (type, x, y) => request("node_add", { type, x, y });
-export const moveNode = (id, x, y) => request("node_move", { id, x, y });
-export const deleteNode = (id) => request("node_delete", { id });
-export const fetchNodeIndex = () => request("init_nodes");
+/* ---------- NODES (Actions) ---------- */
+export const addNode = (type, x, y) =>
+  request("node_add", { type, x, y });
 
-// src/api/commands.js
-import { get } from './client';
+export const moveNode = (id, x, y) =>
+  request("node_move", { id, x, y });
 
-export const getStartupData = async () => {
-  console.log("3. API: commands.js calling client.get('/startup')");
-  return await get("/startup");
-};
+export const deleteNode = (id) =>
+  request("node_delete", { id });
+
+// If this is fetching a list, use get, if it's triggering a rebuild, use request
+export const fetchNodeIndex = () => get("/sync/node_index");
