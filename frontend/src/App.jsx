@@ -38,8 +38,8 @@ function App() {
       )}
 
       {/* 1. TOP NAVBAR */}
-      <Navbar />
-
+       <Navbar onOpenProjectManager={() => setShowModal(true)} />
+        
       {/* 2. MAIN CONTENT AREA */}
       <div
         className="flex-1 grid overflow-hidden"

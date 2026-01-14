@@ -1,0 +1,122 @@
+/* Navbar Base */
+.navbar {
+  height: 56px;
+  background-color: #3f3f3f;
+  color: #ddd;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  position: relative;
+  z-index: 50;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Left section with menu buttons */
+.navbar-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Each menu container */
+.navbar-menu {
+  position: relative;
+}
+
+/* Main button for dropdown */
+.navbar-button {
+  background: transparent;
+  border: none;
+  color: #ddd;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.navbar-button:hover,
+.navbar-button.active {
+  background-color: #2e2e2e;
+  color: #fff;
+}
+
+/* Dropdown arrow */
+.arrow {
+  margin-left: 6px;
+  font-size: 10px;
+  transition: transform 0.2s ease;
+}
+
+.navbar-button.active .arrow {
+  transform: rotate(180deg);
+}
+
+/* Dropdown menu */
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  background-color: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  border-radius: 6px;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+  margin-top: 6px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+/* Dropdown items */
+.dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: transparent;
+  color: #ddd;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #3b78ff;
+  color: #fff;
+}
+
+/* Danger variant */
+.dropdown-item.danger {
+  color: #ff6b6b;
+}
+
+.dropdown-item.danger:hover {
+  background-color: #ff4c4c;
+}
+
+/* Divider */
+.dropdown-divider {
+  height: 1px;
+  background-color: #3a3a3a;
+  margin: 4px 0;
+}
+
+/* Icon inside dropdown */
+.item-icon {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-left: 6px;
+}
+
+/* Full-screen overlay to close dropdown */
+.dropdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
