@@ -10,12 +10,11 @@ import "reactflow/dist/style.css";
 import DynamicNode from "./dynamicNode";
 import { loadGraph as loadGraphAPI } from "../../api/commands";
 import { loadGraph } from "./graphLoader";
-
-export default function Canvas() {
+export default function Canvas({ onRegisterRefresh }) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
 
-  const nodeTypes = { dynamicNode: DynamicNode };
+  const nodeTypes = { dynamicNode: DynamicNode }; // 👈 ADD THIS
 
   const refreshGraph = async () => {
     const res = await loadGraphAPI();
@@ -27,7 +26,8 @@ export default function Canvas() {
   };
 
   useEffect(() => {
-    refreshGraph();
+    onRegisterRefresh(() => refreshGraph);
+    refreshGraph(); 
   }, []);
 
   const onNodesChange = useCallback(

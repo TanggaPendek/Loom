@@ -47,14 +47,13 @@ def get_startup_payload():
             result[key] = None
     return result
 
-def handle_load_graph(payload):
-    """
-    Dynamic handler triggered by signal_hub.
-    """
+# handlers.py
+
+def handle_load_graph(payload=None):
+    """Dynamically loads graph based on state.json"""
     state_path = USERDATA_PATH / "state.json"
     
     if not state_path.exists():
-        # We emit a failure signal so the system knows
         return {"status": "error", "message": "state.json missing"}
 
     try:
@@ -72,12 +71,11 @@ def handle_load_graph(payload):
             with open(graph_path, "r", encoding="utf-8-sig") as f:
                 graph_content = json.load(f)
             
-            # Return the data to the hub
             return {
                 "metadata": state_data,
                 "graph": graph_content
             }
+        return {"status": "error", "message": "Graph file not found"}
+
     except Exception as e:
         return {"status": "error", "message": str(e)}
-    
-    

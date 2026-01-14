@@ -37,28 +37,31 @@ def create_dispatcher(signal_hub, project_backend):
 
     @router.post("/dispatch")
     async def dispatch(payload: Dict[str, Any] = Body(...)):
-        # (Your existing dispatch logic for fire-and-forget)
+        """Fire-and-forget actions"""
         cmd = payload.get("cmd")
         signal_name = COMMAND_MAP.get(cmd)
-        if signal_name:
-            signal_hub.emit_concurrent(signal_name, payload)
+        
+        if not signal_name:
+            return {"status": "error", "message": f"Unknown action: {cmd}"}
+
+        signal_hub.emit_concurrent(signal_name, payload)
         return {"status": "success", "command": cmd}
 
     @router.get("/sync/{target}")
     async def sync_data(target: str):
+        """Data-fetching requests"""
         signal_name = SYNC_MAP.get(target)
         
         if not signal_name:
             raise HTTPException(status_code=404, detail=f"Sync target '{target}' not mapped")
 
-        # Dynamically trigger the listener and capture the return value
-        # .emit() returns a list of results from all listeners
+        # Capture the results from the updated emit()
         results = signal_hub.emit(signal_name, {})
         
-        if not results:
-            return {"status": "error", "message": "No data returned from handler"}
+        # If the handler returned a dictionary, it's at results[0]
+        if results and results[0] is not None:
+            return results[0]
 
-        # Return the first result (the JSON from your handler)
-        return results[0]
+        return {"status": "error", "message": "No data returned from handler"}
 
     return router

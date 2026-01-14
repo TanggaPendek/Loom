@@ -14,6 +14,9 @@ export const loadGraph = () => get("/sync/load_graph");
 export const initProject = () => request("init");
 export const createProject = (data) => request("project_create", data);
 export const deleteProject = (projectId) => request("project_delete", { projectId });
+export const loadProject = (projectId) => request("project_load", { projectId });
+export const selectProject = (projectId) => request("project_load", { projectId });
+export const openProject = (projectId) => request("project_open", { projectId });
 
 /* ---------- NODES (Actions) ---------- */
 export const addNode = (type, x, y) =>

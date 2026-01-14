@@ -204,34 +204,34 @@ class SignalHub:
         if self._enable_logging and removed_count > 0:
             logger.info(f"Cleared {removed_count} handlers from signal '{signal_name}'")
     
-    def emit(self, signal_name: str, payload: Any = None) -> None:
+    # modules/signal_hub.py (Partial - showing the corrected emit)
+
+    def emit(self, signal_name: str, payload: Any = None) -> List[Any]:
         """
-        Emit a signal to all registered synchronous handlers.
-        
-        Handlers are executed sequentially. If a handler raises an exception,
-        it is caught, logged, and other handlers continue to execute.
-        
-        Args:
-            signal_name: Name of the signal
-            payload: Optional data to pass to handlers
+        Emit a signal and return a list of all handler return values.
         """
         if self._enable_logging:
             logger.debug(f"Emitting signal '{signal_name}' with payload: {payload}")
         
+        results = []
         handlers = self._listeners.get(signal_name, [])
+        
         for handler, metadata in handlers:
             try:
-                handler(payload)
+                # Capture the result of the handler
+                res = handler(payload)
+                results.append(res)
             except Exception as e:
                 handler_name = metadata.get("name", "unknown")
                 logger.error(f"Error in sync handler '{handler_name}' for signal '{signal_name}': {e}")
-                # Emit handler_error signal (but avoid infinite recursion)
                 if signal_name != "handler_error":
                     self.emit("handler_error", {
                         "signal": signal_name,
                         "handler": handler_name,
                         "error": str(e)
                     })
+        
+        return results # <--- Now returning values to the caller (API Router)
     
     async def emit_async(self, signal_name: str, payload: Any = None) -> None:
         """
