@@ -42,12 +42,23 @@ const ProjectModal = ({ onSelectProject }) => {
   };
 
 const handleProjectClick = async (proj) => {
-  const ok = await selectProject(proj.projectId);
+  try {
+    const res = await selectProject(proj.projectId);
 
-  if (ok) {
-    onSuccess(); // close modal + refresh canvas
+    if (res?.status === "success" && res.result?.status === "ok") {
+      // Just close modal + refresh
+      onSelectProject(); // no need to pass projectId
+    } else {
+      console.error("Failed to select project:", res);
+      alert("Could not open project.");
+    }
+  } catch (err) {
+    console.error("Error selecting project:", err);
+    alert("Something went wrong.");
   }
 };
+
+
 
   if (loading) return <div className="modal-overlay">Loading Projects...</div>;
 return (

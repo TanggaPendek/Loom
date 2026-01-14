@@ -12,6 +12,7 @@ function App() {
   // 1. Initialize to true so it shows immediately on load
   const [showModal, setShowModal] = useState(true);
   const [refreshCanvas, setRefreshCanvas] = useState(() => () => {});
+  const [activeProject, setActiveProject] = useState(null);
 
   useEffect(() => {
     initProject().then((data) => {
@@ -29,9 +30,9 @@ function App() {
       {/* 0. FORCE POPUP - Overlaying the entire app */}
       {showModal && (
         <ProjectModal
-          onSuccess={() => {
-            setShowModal(false);
-            refreshCanvas(); // 👈 direct “yo refresh”
+          onSelectProject={() => {
+            setShowModal(false); // close modal
+            refreshCanvas(); // refresh canvas
           }}
         />
       )}
