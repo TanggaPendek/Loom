@@ -16,6 +16,7 @@ def create_dispatcher(signal_hub, project_backend):
         "project_create": "project_create_request",
         "project_edit":   "project_update_request",
         "project_delete": "project_delete_request",
+        "project_load": "project_load_request",
         "load_graph": "load_graph_request",
 
         # node ops
@@ -37,15 +38,21 @@ def create_dispatcher(signal_hub, project_backend):
 
     @router.post("/dispatch")
     async def dispatch(payload: Dict[str, Any] = Body(...)):
-        """Fire-and-forget actions"""
         cmd = payload.get("cmd")
         signal_name = COMMAND_MAP.get(cmd)
         
         if not signal_name:
             return {"status": "error", "message": f"Unknown action: {cmd}"}
+        
+        # Use synchronous emit if you need the handler to complete
+        results = signal_hub.emit(signal_name, payload)
+        
+        # If handler failed or returned error
+        if not results or results[0].get("status") != "ok":
+            return {"status": "error", "message": "Handler failed"}
+        
+        return {"status": "success", "command": cmd, "result": results[0]}
 
-        signal_hub.emit_concurrent(signal_name, payload)
-        return {"status": "success", "command": cmd}
 
     @router.get("/sync/{target}")
     async def sync_data(target: str):

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import USERDATA_PATH, NODEBANK_PATH, init_directories
 from .handlers import (
     log_signal, handle_engine_output, on_finished, 
-    launch_engine, get_startup_payload, handle_load_graph
+    launch_engine, get_startup_payload, handle_load_graph, project_load_request
 )
 
 # Core Module Imports
@@ -38,7 +38,7 @@ index_service = IndexService(
 signal_hub.on("load_graph_request", handle_load_graph)
 signal_hub.on("startup_request", handle_startup_request)
 signal_hub.on("load_graph_request", handle_load_graph)
-
+signal_hub.on("project_load_request", project_load_request)
 
 # 3. Register Signal Listeners
 events = [

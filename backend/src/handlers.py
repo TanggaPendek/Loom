@@ -4,6 +4,11 @@ import os
 import subprocess
 from .config import ROOT_DIR, USERDATA_PATH, NODE_INDEX_PATH
 
+
+PROJECT_INDEX_PATH = USERDATA_PATH / "projectindex.json"
+STATE_PATH = USERDATA_PATH / "state.json"
+
+
 def handle_engine_output(payload):
     line = payload.get("line", "")
     if line.startswith("PROGRESS:"):
@@ -78,4 +83,31 @@ def handle_load_graph(payload=None):
         return {"status": "error", "message": "Graph file not found"}
 
     except Exception as e:
+        return {"status": "error", "message": str(e)}
+    
+def project_load_request(payload):
+    print("handle_select_project called with:", payload)
+    try:
+        project_id = payload.get("projectId")
+        print("project_id:", project_id)
+
+        if not PROJECT_INDEX_PATH.exists():
+            raise FileNotFoundError(f"{PROJECT_INDEX_PATH} missing")
+
+        with open(PROJECT_INDEX_PATH, "r", encoding="utf-8") as f:
+            project_index = json.load(f)
+        print("project_index loaded:", project_index)
+
+        project = next((p for p in project_index if p.get("projectId") == project_id), None)
+        if not project:
+            raise ValueError(f"Project '{project_id}' not found")
+
+        with open(STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(project, f, indent=4)
+        print("STATE_PATH updated successfully")
+
+        return {"status": "ok", "projectId": project_id}
+
+    except Exception as e:
+        print("ERROR in handle_select_project:", e)
         return {"status": "error", "message": str(e)}
