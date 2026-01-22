@@ -1,0 +1,89 @@
+/* 1. REMOVE DEFAULT SELECTION BOXES & FOCUS OUTLINES */
+.react-flow__node:focus {
+  outline: none !important;
+}
+
+.react-flow__nodesselection-rect, 
+.react-flow__selection {
+  background: rgba(244, 63, 94, 0.05) !important;
+  border: 1px dashed #fb7185 !important;
+}
+
+/* 2. THE NODE CONTAINER */
+.react-flow__node-dynamicNode {
+  border-radius: 24px;
+  background: white;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+  
+  /* Smooth but snappy transition */
+  transition: 
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
+    box-shadow 0.3s ease, 
+    border-color 0.3s ease;
+}
+
+/* 3. THE "OOMPH" CLICK EFFECT */
+.react-flow__node-dynamicNode.selected {
+  /* Scale up more and add a "Rose" inner glow + deep shadow */
+  transform: scale(1.08) rotate(-1deg); /* Slight tilt adds character */
+  border-color: #fb7185;
+  box-shadow: 
+    0 10px 30px rgba(244, 63, 94, 0.2), 
+    inset 0 0 10px rgba(244, 63, 94, 0.05);
+  z-index: 1000 !important; /* Ensure selected node pops to front */
+}
+
+/* Optional: Subtle pulse animation when selected */
+@keyframes node-pulse {
+  0% { box-shadow: 0 10px 30px rgba(244, 63, 94, 0.2); }
+  50% { box-shadow: 0 10px 35px rgba(244, 63, 94, 0.35); }
+  100% { box-shadow: 0 10px 30px rgba(244, 63, 94, 0.2); }
+}
+
+.react-flow__node-dynamicNode.selected {
+  animation: node-pulse 2s infinite ease-in-out;
+}
+
+.react-flow__edge-path {
+  stroke: #10b981;
+  stroke-width: 3;
+  opacity: 0.3;
+  transition: opacity 0.3s ease, stroke 0.3s ease;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: #f43f5e;
+  stroke-width: 4;
+  opacity: 1;
+}
+
+/* Remove the default React Flow background/border so only YOUR squircle shows */
+.react-flow__node-dynamicNode {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Apply the "Oomph" to the actual div inside your component */
+.react-flow__node-dynamicNode > div {
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 2px solid rgba(16, 185, 129, 0.1);
+}
+
+/* THE CLICK EFFECT */
+.react-flow__node-dynamicNode.selected > div {
+  transform: scale(1.08) rotate(-1deg);
+  border-color: #fb7185 !important; /* Rose color */
+  box-shadow: 0 20px 40px rgba(244, 63, 94, 0.2);
+}
+
+/* Remove that annoying blue box that appears on click */
+.react-flow__node:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.react-flow__node.dragging {
+  filter: none !important;
+}

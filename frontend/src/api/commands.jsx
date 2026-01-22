@@ -30,3 +30,6 @@ export const deleteNode = (id) =>
 
 // If this is fetching a list, use get, if it's triggering a rebuild, use request
 export const fetchNodeIndex = () => get("/sync/node_index");
+
+export const updateNodeData = (id, data) => 
+  request("node_update", { id, data });

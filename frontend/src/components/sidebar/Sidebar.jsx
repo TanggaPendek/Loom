@@ -1,43 +1,102 @@
-// src/components/sidebar/Sidebar.jsx
-import React from 'react';
-import { useNodeLibrary } from './script/useNodeLibrary';
-import Node from '../universal/node/node'; 
+import React from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useNodeLibrary } from "./script/useNodeLibrary";
+import Node from "../universal/node/node";
 
 export default function Sidebar() {
-  // Destructure the values from your hook
   const { nodes, loading, refresh } = useNodeLibrary();
+  const [isSpinning, setIsSpinning] = useState(false);
 
-  const handleManualClick = () => {
-    console.log("1. UI: Button Clicked");
-    if (typeof refresh === 'function') {
-      console.log("2. UI: Calling refresh function from hook...");
-      refresh();
-    } else {
-      console.error("2. UI ERROR: refresh is not a function!", refresh);
+  const handleManualClick = async (e) => {
+    e.stopPropagation();
+    if (typeof refresh !== "function" || isSpinning) return;
+
+    setIsSpinning(true);
+    const spinTimer = new Promise((resolve) => setTimeout(resolve, 600));
+
+    try {
+      // Fire the instant refresh and the timer simultaneously
+      await Promise.all([refresh(), spinTimer]);
+    } finally {
+      setIsSpinning(false);
     }
   };
 
   return (
-    <div className="w-64 h-full bg-gray-50 border-r flex flex-col font-sans">
-      <div className="p-3 border-b flex justify-between items-center bg-white">
-        <span className="font-bold text-xs text-gray-500 uppercase">Node Bank</span>
-        
-        <button 
-          onClick={handleManualClick} // Use our logged handler
-          disabled={loading}
-          className="p-1.5 rounded-md hover:bg-gray-100"
-        >
-          <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-        </button>
-      </div>
+    <>
+      {/* SVG Cotton Texture Filter Definition */}
+      <svg className="hidden">
+        <filter id="cotton-texture">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.8"
+            numOctaves="3"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix
+            type="matrix"
+            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"
+          />
+          <feComposite operator="in" in2="SourceGraphic" />
+        </filter>
+      </svg>
 
-      <div className="flex-1 overflow-y-auto p-2">
-        {nodes.map((node, i) => (
-          <Node key={node.nodeId || i} data={node} context="sidebar" />
-        ))}
+      {/* Main Container: Squircle 32px, Creamy Cotton Foundation */}
+      <div
+        className="w-72 h-full bg-[#FCFDFB] border-r border-emerald-100 flex flex-col relative overflow-hidden"
+        style={{ borderRadius: "0 32px 32px 0" }} // External Squircle logic
+      >
+        {/* Cotton Texture Overlay */}
+        <div
+          className="absolute inset-0 pointer-events-none opacity-50"
+          style={{ filter: "url(#cotton-texture)" }}
+        />
+
+        {/* Header Section */}
+        <div className="p-8 flex justify-between items-center relative z-10">
+          <span className="font-bold text-[10px] text-emerald-700 uppercase tracking-[0.2em]">
+            Node Bank
+          </span>
+
+          {/* High-Contrast Refresh/Action Button */}
+          <button
+            onClick={handleManualClick}
+            disabled={loading || isSpinning}
+            className="group w-11 h-11 flex items-center justify-center rounded-full bg-white 
+                       shadow-[0_4px_20px_rgba(16,185,129,0.15)] hover:shadow-[0_4px_20px_rgba(244,63,94,0.2)]
+                       text-emerald-500 hover:text-rose-500 transition-all duration-300 active:scale-95"
+          >
+            <svg
+              className={`w-5 h-5 transition-all duration-700 ease-in-out ${
+                isSpinning || loading ? "animate-spin text-rose-500" : ""
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="3"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrolling Area: Internal Squircle 24px for Node cards */}
+        <div className="flex-1 overflow-y-auto px-6 pb-8 space-y-6 relative z-10">
+          {nodes.map((node, i) => (
+            <div
+              key={node.nodeId || i}
+              className="bg-white rounded-[24px] shadow-sm shadow-emerald-50 border border-emerald-50/50 
+                         hover:shadow-md hover:shadow-emerald-100 transition-all duration-300 active:scale-[0.98] cursor-pointer"
+            >
+              <Node data={node} context="sidebar" />
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

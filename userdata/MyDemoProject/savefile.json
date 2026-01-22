@@ -1,40 +1,118 @@
 {
-    "projectId": "proj_003",
-    "projectName": "NewName",
-    "projectPath": "userdata\\MyDemoProject\\savefile.json",
-    "metadata": {
-        "author": "author",
-        "description": "New desc",
-        "createdAt": "2025-12-16T01:13:02.532667Z",
-        "lastModified": "2025-12-25T20:53:48.244408Z"
+  "projectId": "proj_nested_loop",
+  "projectName": "Nested Loop Project",
+  "projectPath": "/userdata/test_nested_loop.json",
+  "metadata": {
+    "author": "TanggaPendek",
+    "description": "Nested loops using self-routing add nodes",
+    "createdAt": "2026-01-14T12:00:00Z"
+  },
+  "nodes": [
+    {
+      "nodeId": "node_1",
+      "positionId": "pos_1",
+      "name": "input_i",
+      "position": { "x": 100, "y": 100 },
+      "input": [{ "value": 0 }],
+      "output": ["out_i"],
+      "ref": "builtin",
+      "metadata": { "type": "source" }
     },
-    "nodes": [
-        {
-            "nodeId": "node_1",
-            "position": {
-                "x": 150,
-                "y": 250
-            }
-        },
-        {
-            "nodeId": "node_2",
-            "position": {
-                "x": 400,
-                "y": 300
-            },
-            "name": "add_node_updated"
-        }
-    ],
-    "connections": [
-        {
-            "connectionId": "conn_3",
-            "sourceNodeId": "node_2",
-            "sourceOutput": "out_2",
-            "targetNodeId": "node_3",
-            "targetInput": "var_1",
-            "metadata": {
-                "label": "data_flow"
-            }
-        }
-    ]
+    {
+      "nodeId": "node_2",
+      "positionId": "pos_2",
+      "name": "input_j",
+      "position": { "x": 100, "y": 300 },
+      "input": [{ "value": 0 }],
+      "output": ["out_j"],
+      "ref": "builtin",
+      "metadata": { "type": "source" }
+    },
+    {
+      "nodeId": "node_3",
+      "positionId": "pos_3",
+      "name": "outer_condition",
+      "position": { "x": 350, "y": 100 },
+      "input": [
+        { "var": "out_i" },
+        { "value": 3 }
+      ],
+      "output": ["out_outer"],
+      "ref": "builtin",
+      "metadata": { "operation": "condition", "loop": true }
+    },
+    {
+      "nodeId": "node_4",
+      "positionId": "pos_4",
+      "name": "inner_condition",
+      "position": { "x": 350, "y": 300 },
+      "input": [
+        { "var": "out_j" },
+        { "value": 2 }
+      ],
+      "output": ["out_inner"],
+      "ref": "builtin",
+      "metadata": { "operation": "condition", "loop": true }
+    },
+    {
+      "nodeId": "node_5",
+      "positionId": "pos_5",
+      "name": "add_i_j",
+      "position": { "x": 600, "y": 200 },
+      "input": [
+        { "var": "out_i" },
+        { "var": "out_j" }
+      ],
+      "output": ["out_sum"],
+      "ref": "builtin",
+      "metadata": { "operation": "add" }
+    },
+    {
+      "nodeId": "node_6",
+      "positionId": "pos_6",
+      "name": "print_sum",
+      "position": { "x": 850, "y": 200 },
+      "input": [{ "var": "out_sum" }],
+      "output": [],
+      "ref": "builtin",
+      "metadata": { "operation": "print" }
+    },
+    {
+      "nodeId": "node_7",
+      "positionId": "pos_7",
+      "name": "increment_i",
+      "position": { "x": 600, "y": 100 },
+      "input": [
+        { "var": "out_i" },
+        { "value": 1 }
+      ],
+      "output": ["out_i"],
+      "ref": "builtin",
+      "metadata": { "operation": "add" }
+    },
+    {
+      "nodeId": "node_8",
+      "positionId": "pos_8",
+      "name": "increment_j",
+      "position": { "x": 600, "y": 300 },
+      "input": [
+        { "var": "out_j" },
+        { "value": 1 }
+      ],
+      "output": ["out_j"],
+      "ref": "builtin",
+      "metadata": { "operation": "add" }
+    }
+  ],
+  "connections": [
+    { "connectionId": "conn_1", "sourceNodeId": "node_1", "sourceOutput": "out_i", "targetNodeId": "node_3", "targetInput": "var_1" },
+    { "connectionId": "conn_2", "sourceNodeId": "node_3", "sourceOutput": "out_outer", "targetNodeId": "node_7", "targetInput": "var_1", "metadata": { "label": "true_path" } },
+    { "connectionId": "conn_3", "sourceNodeId": "node_7", "sourceOutput": "out_i", "targetNodeId": "node_3", "targetInput": "var_1", "metadata": { "label": "loop_back" } },
+    { "connectionId": "conn_4", "sourceNodeId": "node_3", "sourceOutput": "out_outer", "targetNodeId": "node_4", "targetInput": "var_1", "metadata": { "label": "false_path" } },
+    { "connectionId": "conn_5", "sourceNodeId": "node_2", "sourceOutput": "out_j", "targetNodeId": "node_4", "targetInput": "var_1" },
+    { "connectionId": "conn_6", "sourceNodeId": "node_4", "sourceOutput": "out_inner", "targetNodeId": "node_8", "targetInput": "var_1", "metadata": { "label": "true_path" } },
+    { "connectionId": "conn_7", "sourceNodeId": "node_8", "sourceOutput": "out_j", "targetNodeId": "node_4", "targetInput": "var_1", "metadata": { "label": "loop_back" } },
+    { "connectionId": "conn_8", "sourceNodeId": "node_4", "sourceOutput": "out_inner", "targetNodeId": "node_5", "targetInput": "var_1", "metadata": { "label": "false_path" } },
+    { "connectionId": "conn_9", "sourceNodeId": "node_5", "sourceOutput": "out_sum", "targetNodeId": "node_6", "targetInput": "var_1" }
+  ]
 }

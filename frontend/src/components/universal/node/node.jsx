@@ -11,6 +11,7 @@ export default function Node({ data, context = 'canvas' }) {
     event.dataTransfer.effectAllowed = 'move';
   };
 
+
   return (
     <div 
       draggable={isSidebar} 
