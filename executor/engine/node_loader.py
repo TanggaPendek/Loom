@@ -26,10 +26,18 @@ class NodeLoader:
         self._module_cache: Dict[str, Any] = {}
 
     def load_node_function(self, node: dict):
-        node_type = node.get("ref", "builtin")
+        node_id = node.get("nodeId")
         node_name = node.get("name")
-        node_id = node.get("nodeId", node_name)
-        script_path = self.nodebank_path / node_type / f"{node_name}.py"
+
+        # 1️⃣ Use explicit scriptPath if provided
+        if "scriptPath" in node:
+            script_path = Path(node["scriptPath"])
+        else:
+            node_type = node.get("ref", "builtin")
+            script_path = self.nodebank_path / node_type / f"{node_name}.py"
+
+        # Normalize + validate
+        script_path = script_path.resolve()
 
         if not script_path.exists():
             if self.signal_hub:
@@ -40,26 +48,33 @@ class NodeLoader:
                 })
             raise FileNotFoundError(f"Node script not found: {script_path}")
 
+        # 2️⃣ Module cache (by absolute path, not name)
         cache_key = str(script_path)
         if cache_key in self._module_cache:
             module = self._module_cache[cache_key]
         else:
-            spec = importlib.util.spec_from_file_location(node_name, script_path)
+            spec = importlib.util.spec_from_file_location(
+                f"node_{node_id}", script_path
+            )
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             self._module_cache[cache_key] = module
 
-        func = getattr(module, node_name, None)
+        # 3️⃣ Function resolution
+        entry_fn = node.get("entryFunction", node_name)
+        func = getattr(module, entry_fn, None)
+
         if func is None:
             if self.signal_hub:
                 self.signal_hub.emit("node_load_failed", {
                     "nodeId": node_id,
                     "name": node_name,
-                    "error": f"Function '{node_name}' not found in {script_path}"
+                    "error": f"Function '{entry_fn}' not found in {script_path}"
                 })
-            raise AttributeError(f"Function '{node_name}' not found in {script_path}")
+            raise AttributeError(f"Function '{entry_fn}' not found in {script_path}")
 
         return func
+
 
     async def _load_node_async(self, node: dict) -> tuple:
         node_id = node.get("nodeId")

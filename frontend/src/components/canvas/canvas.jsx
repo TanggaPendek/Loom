@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import ReactFlow, {
   applyNodeChanges,
   applyEdgeChanges,
@@ -14,6 +14,12 @@ import LoomEdge from "../universal/loomEdge";
 import { loadGraph as loadGraphAPI } from "../../api/commands";
 import { loadGraph } from "./graphLoader";
 import CottonEdge from "./cottonEdge";
+import { 
+  deleteGraphNode, 
+  moveGraphNode, 
+  addGraphNode,
+  editGraphNode        
+} from "../../api/commands";
 
 const NODE_TYPES = { dynamicNode: DynamicNode };
 const EDGE_TYPES = { loom: LoomEdge };
@@ -23,13 +29,13 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
   const [edges, setEdges] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
   const edgeTypes = {
     cotton: CottonEdge,
   };
 
   // --- 1. SELECTION HANDLERS ---
-  // Change this in your Canvas component
   const onNodeClick = useCallback(
     (_, node) => {
       if (node.dragging) return;
@@ -63,6 +69,60 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     );
   }, []);
 
+  const onDragOver = useCallback((event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+ const onDrop = useCallback(
+  async (event) => {
+    event.preventDefault();
+    if (!reactFlowInstance) return;
+
+    const rawData = event.dataTransfer.getData("application/reactflow");
+    if (!rawData) return;
+    const droppedData = JSON.parse(rawData);
+
+    // Calculate position with a slight offset to center the node
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const position = reactFlowInstance.project({
+      x: event.clientX - bounds.left - 50,
+      y: event.clientY - bounds.top - 20,
+    });
+
+    /* --- API SECTION --- */
+    const response = await addGraphNode(
+      droppedData.label, 
+      position.x,
+      position.y
+    );
+
+    // CRITICAL: The dispatcher returns handler data inside 'result'
+    if (response?.status === "success" && response.result?.node) {
+      const backendNode = response.result.node;
+
+      const newNode = {
+        id: backendNode.nodeId,
+        type: "dynamicNode",
+        position: backendNode.position,
+        data: {
+          label: backendNode.name,
+          inputs: backendNode.input || [],
+          outputs: backendNode.output || [],
+          controls: backendNode.controls || [],
+          onChange: (key, value) =>
+            onInputChange(backendNode.nodeId, key, value),
+        },
+      };
+
+      setNodes((nds) => nds.concat(newNode));
+    } else {
+      console.error("LOOM Error: Check backend handler for 'node_create_request'");
+    }
+  },
+  [reactFlowInstance, setNodes, onInputChange]
+);
+
   const onNodesChange = useCallback(
     (chs) => setNodes((nds) => applyNodeChanges(chs, nds)),
     [],
@@ -71,6 +131,17 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     (chs) => setEdges((eds) => applyEdgeChanges(chs, eds)),
     [],
   );
+
+  const onNodesDelete = useCallback(async (deletedNodes) => {
+      for (const node of deletedNodes) {
+        try {
+          console.log(`LOOM: Severing node ${node.id}`);
+          await deleteGraphNode(node.id);
+        } catch (error) {
+          console.error("Failed to delete node:", error);
+        }
+      }
+    }, []);
 
   // --- 3. REFRESH LOGIC ---
   const refreshGraph = useCallback(async () => {
@@ -120,42 +191,27 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     onNodesUpdate?.(nodes);
   }, [nodes]);
 
-  const onConnect = useCallback(
-    (params) => {
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            type: "cotton",
-            animated: false, // <- lock it
-          },
-          eds,
-        ),
-      );
-    },
-    [setEdges],
-  );
+const onConnect = useCallback(async (params) => {
+    try {
+
+      setEdges((eds) => addEdge({ ...params, type: "cotton", animated: false }, eds));
+      
+      console.log(`LOOM: Weaving ${params.sourceHandle} -> ${params.targetHandle}`);
+    } catch (err) {
+      console.error("Weaving error:", err);
+    }
+  }, [setEdges]);
+  
+const onEdgesDelete = useCallback(async (deletedEdges) => {
+    for (const edge of deletedEdges) {
+      console.log(`LOOM: Cutting thread ${edge.id}`);
+      await request("connection_delete", { connectionId: edge.id });
+    }
+  }, []);
 
   // --- 5. RENDER ---
   return (
     <div className="w-full h-full bg-[#FCFDFB] relative overflow-hidden">
-      {/* SVG Cotton Texture Filter */}
-      <svg className="hidden">
-        <filter id="canvas-cotton-texture">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.8"
-            numOctaves="3"
-            stitchTiles="stitch"
-          />
-          <feColorMatrix
-            type="matrix"
-            values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.05 0"
-          />
-          <feComposite operator="in" in2="SourceGraphic" />
-        </filter>
-      </svg>
-
       {/* Texture Overlay */}
       <div
         className="absolute inset-0 pointer-events-none opacity-40 z-0"
@@ -203,11 +259,16 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onInit={setReactFlowInstance} // CRITICAL: Captures the instance for coordinate projection
+        onDrop={onDrop} // Handle the drop
+        onDragOver={onDragOver} // Allow the drop
+        onNodesDelete={onNodesDelete}
         onConnect={onConnect}
+        onEdgesDelete={onEdgesDelete}
         fitView
         className="relative z-10"
-        onNodeDragStop={(_, node) => {
-          moveNode(node.id, node.position.x, node.position.y);
+        onNodeDragStop={(event, node) => {
+          onNodesUpdate?.(nodes); // Only update once the drag is finished
         }}
       >
         <Background variant="dots" color="#10b981" gap={32} opacity={0.15} />

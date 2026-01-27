@@ -7,15 +7,27 @@ export default function Sidebar() {
   const { nodes, loading, refresh } = useNodeLibrary();
   const [isSpinning, setIsSpinning] = useState(false);
 
+
+
+const onDragStart = (event, nodeData) => {
+    // We package the backend node data to be parsed by the Canvas
+    const dragData = {
+      label: nodeData.name,
+      inputs: nodeData.input || [],
+      outputs: nodeData.output || [],
+      controls: nodeData.controls || [],
+    };
+    
+    event.dataTransfer.setData("application/reactflow", JSON.stringify(dragData));
+    event.dataTransfer.effectAllowed = "move";
+  };
+
   const handleManualClick = async (e) => {
     e.stopPropagation();
     if (typeof refresh !== "function" || isSpinning) return;
-
     setIsSpinning(true);
     const spinTimer = new Promise((resolve) => setTimeout(resolve, 600));
-
     try {
-      // Fire the instant refresh and the timer simultaneously
       await Promise.all([refresh(), spinTimer]);
     } finally {
       setIsSpinning(false);
@@ -89,8 +101,11 @@ export default function Sidebar() {
           {nodes.map((node, i) => (
             <div
               key={node.nodeId || i}
+              draggable // 1. Enable dragging
+              onDragStart={(e) => onDragStart(e, node)} // 2. Attach handler
               className="bg-white rounded-[24px] shadow-sm shadow-emerald-50 border border-emerald-50/50 
-                         hover:shadow-md hover:shadow-emerald-100 transition-all duration-300 active:scale-[0.98] cursor-pointer"
+                         hover:shadow-md hover:shadow-emerald-100 transition-all duration-300 
+                         active:scale-[0.98] cursor-grab active:cursor-grabbing"
             >
               <Node data={node} context="sidebar" />
             </div>

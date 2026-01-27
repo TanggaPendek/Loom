@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import USERDATA_PATH, NODEBANK_PATH, init_directories
 from .handlers import (
     log_signal, handle_engine_output, on_finished, 
-    launch_engine, get_startup_payload, handle_load_graph, project_load_request
+    launch_engine, get_startup_payload, handle_load_graph, project_load_request,graph_node_add, graph_node_delete,
 )
 
 # Core Module Imports
@@ -39,6 +39,8 @@ signal_hub.on("load_graph_request", handle_load_graph)
 signal_hub.on("startup_request", handle_startup_request)
 signal_hub.on("load_graph_request", handle_load_graph)
 signal_hub.on("project_load_request", project_load_request)
+signal_hub.on("project_node_add", graph_node_add)
+signal_hub.on("project_node_delete", graph_node_delete)
 
 # 3. Register Signal Listeners
 events = [

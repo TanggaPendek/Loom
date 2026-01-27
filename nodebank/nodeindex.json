@@ -1,6 +1,6 @@
 [
     {
-        "nodeId": "add_node_add_node",
+        "nodeId": "add_node",
         "name": "Add",
         "type": "script_node",
         "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
@@ -11,12 +11,12 @@
                 "variables"
             ],
             "outputs": [
-                "return_value"
+                "result"
             ]
         }
     },
     {
-        "nodeId": "condition_node_condition_node",
+        "nodeId": "condition_node",
         "name": "Condition",
         "type": "script_node",
         "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\condition_node.py",
@@ -27,39 +27,56 @@
                 "variables"
             ],
             "outputs": [
-                "return_value"
+                "return",
+                "return"
             ]
         }
     },
     {
-        "nodeId": "input_node_input_node",
+        "nodeId": "input_node",
         "name": "Input",
         "type": "script_node",
         "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\input_node.py",
         "entryFunction": "input_node",
         "dynamic": {
             "inputs": [
-                "inputs",
+                "input",
                 "variables"
             ],
             "outputs": [
-                "return_value"
+                "input"
             ]
         }
     },
     {
-        "nodeId": "print_node_print_node",
+        "nodeId": "print_node",
         "name": "Print",
         "type": "script_node",
         "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\print_node.py",
         "entryFunction": "print_node",
         "dynamic": {
             "inputs": [
-                "inputs",
-                "variables"
+                "inputs"
+            ],
+            "outputs": []
+        }
+    },
+    {
+        "nodeId": "test_node",
+        "name": "Test",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\test_node.py",
+        "entryFunction": "test_node",
+        "dynamic": {
+            "inputs": [
+                "a",
+                "b",
+                "c"
             ],
             "outputs": [
-                "return_value"
+                "sum_val",
+                "product",
+                "max_val"
             ]
         }
     }

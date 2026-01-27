@@ -1,21 +1,26 @@
-def condition_node(inputs, variables):
+def condition_node(inputs, variables=None):
     """
-    Condition node: checks if first input < second input.
-    
-    inputs[0] = current value (from previous node)
-    inputs[1] = threshold value (e.g., 1000)
-    
-    Returns:
-        True if inputs[0] < inputs[1], False otherwise
+    inputs: dict or list
+        - first input = value to test
+        - second input = value to compare against
+    returns: dict {"true": value, "false": value} depending on equality
     """
-    # extract numeric inputs
-    current_value = inputs[0]
-    threshold = inputs[1]
+    # normalize inputs to a list
+    if isinstance(inputs, dict):
+        input_list = list(inputs.values())
+    elif isinstance(inputs, list):
+        input_list = inputs
+    else:
+        input_list = [inputs]
 
-    # evaluate condition
-    result = current_value < threshold
+    # ensure we have at least 2 values
+    if len(input_list) < 2:
+        raise ValueError("condition_node requires at least 2 inputs")
 
-    # optionally store in variables for downstream nodes
-    variables["condition_result"] = result
+    test_value = input_list[0]
+    compare_value = input_list[1]
 
-    return result
+    if test_value == compare_value:
+        return {"true": test_value}
+    else:
+        return {"false": test_value}

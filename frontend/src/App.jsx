@@ -66,31 +66,7 @@ const handleProjectSelected = async (project) => {
 
         <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-emerald-50/50 rounded-full blur-[100px]" />
       </div>
-      <svg style={{ position: "absolute", width: 0, height: 0 }}>
-        <filter
-          id="cotton-fiber-filter"
-          x="-20%"
-          y="-20%"
-          width="140%"
-          height="140%"
-        >
-          {/* High frequency noise creates the "hairs" */}
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.8"
-            numOctaves="4"
-            result="noise"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="1.5"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </svg>
-      ;
+    
 
       {isWeaving && (
         <div className="absolute inset-0 z-[1000] flex flex-col items-center justify-center bg-white/60 backdrop-blur-md transition-opacity duration-300">

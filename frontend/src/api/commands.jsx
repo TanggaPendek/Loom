@@ -31,5 +31,19 @@ export const deleteNode = (id) =>
 // If this is fetching a list, use get, if it's triggering a rebuild, use request
 export const fetchNodeIndex = () => get("/sync/node_index");
 
-export const updateNodeData = (id, data) => 
-  request("node_update", { id, data });
+
+/* ---------- GRAPH NODES (Project Graph) ---------- */
+export const addGraphNode = (type, x, y) =>
+  request("graph_node_add", { type, x, y });
+
+export const editGraphNode = (nodeId, updates) =>
+  request("graph_node_edit", { nodeId, updates });
+
+export const deleteGraphNode = (nodeId) =>
+  request("graph_node_delete", { nodeId });
+
+export const moveGraphNode = (nodeId, x, y) =>
+  request("graph_node_edit", { nodeId, updates: { position: { x, y } } });
+
+// Legacy alias for backward compatibility (do not break old imports)
+export const updateNodeData = (nodeId, updates) => editGraphNode(nodeId, updates);

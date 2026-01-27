@@ -4,32 +4,30 @@ from typing import Dict, Any
 def create_dispatcher(signal_hub, project_backend):
     router = APIRouter()
 
-    COMMAND_MAP = {
-        # init = HOT RELOAD EVERYTHING
-        "init": "hot_reload_all",
 
-        # explicit reloads (optional but useful)
+    COMMAND_MAP = {
+        "init": "hot_reload_all",
         "reload_projects": "project_hot_reload",
         "reload_nodes": "node_hot_reload",
-
-        # project ops
         "project_create": "project_create_request",
-        "project_edit":   "project_update_request",
+        "project_edit": "project_update_request",
         "project_delete": "project_delete_request",
         "project_load": "project_load_request",
         "load_graph": "load_graph_request",
 
-        # node ops
-        "node_add":    "node_create_request",
-        "node_edit":   "node_update_request",
-        "node_delete": "node_delete_request",
-        "node_move":   "node_move_request",
+        "graph_node_add": "project_node_add",
+        "graph_node_delete": "project_node_delete", 
 
-        # engine
-        "run":        "engine_run_request",
-        "stop":       "engine_stop_request",
+        "node_add": "node_create_request",
+        "node_edit": "node_update_request",
+        "node_delete": "node_delete_request",
+        "node_move": "node_move_request",
+
+        "run": "engine_run_request",
+        "stop": "engine_stop_request",
         "force_stop": "engine_kill_request",
     }
+
     SYNC_MAP = {
         "startup": "startup_request",
         "load_graph": "load_graph_request",
@@ -40,19 +38,24 @@ def create_dispatcher(signal_hub, project_backend):
     async def dispatch(payload: Dict[str, Any] = Body(...)):
         cmd = payload.get("cmd")
         signal_name = COMMAND_MAP.get(cmd)
+        print("CMD RECEIVED:", cmd)
+        print("COMMAND_MAP KEYS:", list(COMMAND_MAP.keys()))
+
         
         if not signal_name:
             return {"status": "error", "message": f"Unknown action: {cmd}"}
         
-        # Use synchronous emit if you need the handler to complete
         results = signal_hub.emit(signal_name, payload)
-        
-        # If handler failed or returned error
-        if not results or results[0].get("status") != "ok":
-            return {"status": "error", "message": "Handler failed"}
-        
-        return {"status": "success", "command": cmd, "result": results[0]}
+        print(f"DEBUG: Signal {signal_name} returned results: {results}") # Add this
+        # --- IMPROVED CHECK ---
+        # Check if results exists, is not empty, and the first result is actually a dict
+        if not results or results[0] is None:
+            return {"status": "error", "message": f"Handler for {cmd} returned no data"}
 
+        if isinstance(results[0], dict) and results[0].get("status") == "ok":
+            return {"status": "success", "command": cmd, "result": results[0]}
+        
+        return {"status": "error", "message": "Handler returned an invalid format", "raw": results[0]}
 
     @router.get("/sync/{target}")
     async def sync_data(target: str):
