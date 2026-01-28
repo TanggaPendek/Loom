@@ -18,7 +18,9 @@ import {
   deleteGraphNode, 
   moveGraphNode, 
   addGraphNode,
-  editGraphNode        
+  editGraphNode,
+  createConnection,
+  deleteConnection,
 } from "../../api/commands";
 
 const NODE_TYPES = { dynamicNode: DynamicNode };
@@ -107,11 +109,18 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
         position: backendNode.position,
         data: {
           label: backendNode.name,
-          inputs: backendNode.input || [],
-          outputs: backendNode.output || [],
-          controls: backendNode.controls || [],
-          onChange: (key, value) =>
-            onInputChange(backendNode.nodeId, key, value),
+          // Map inputs to handle both {var: ...} and {value: ...}
+          inputs: backendNode.input.map((inp, idx) => ({
+            id: inp.var || `input_${idx}`, 
+            label: inp.var || "value",
+            type: inp.var ? "variable" : "constant"
+          })),
+          // Map outputs as strings from the list
+          outputs: backendNode.output.map((out) => ({
+            id: out,
+            label: out
+          })),
+          onChange: (key, value) => onInputChange(backendNode.nodeId, key, value),
         },
       };
 
@@ -191,23 +200,47 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     onNodesUpdate?.(nodes);
   }, [nodes]);
 
-const onConnect = useCallback(async (params) => {
-    try {
+// --- 6. EDGE HANDLERS (Optimistic Weaving) ---
 
-      setEdges((eds) => addEdge({ ...params, type: "cotton", animated: false }, eds));
-      
-      console.log(`LOOM: Weaving ${params.sourceHandle} -> ${params.targetHandle}`);
-    } catch (err) {
-      console.error("Weaving error:", err);
-    }
-  }, [setEdges]);
-  
-const onEdgesDelete = useCallback(async (deletedEdges) => {
-    for (const edge of deletedEdges) {
-      console.log(`LOOM: Cutting thread ${edge.id}`);
-      await request("connection_delete", { connectionId: edge.id });
-    }
-  }, []);
+const onConnect = useCallback((params) => {
+  // 1. Generate a temporary ID for immediate UI feedback
+  const tempId = `edge-${Date.now()}`;
+  const newEdge = { 
+    ...params, 
+    id: tempId,
+    type: "cotton", 
+    animated: false 
+  };
+
+  // 2. Update UI instantly
+  setEdges((eds) => addEdge(newEdge, eds));
+  console.log(`LOOM: Optimistically weaving ${params.sourceHandle} -> ${params.targetHandle}`);
+
+  // 3. Fire and forget (backend sync)
+  createConnection(
+    params.source, 
+    params.target, 
+    params.sourceHandle, 
+    params.targetHandle
+  ).catch(err => {
+    console.error("LOOM Weaving Sync Failed:", err);
+    // Optional: Remove the edge or mark it "tangled" (red) if the backend fails
+    setEdges((eds) => eds.filter(e => e.id !== tempId));
+  });
+}, [setEdges]);
+
+const onEdgesDelete = useCallback((deletedEdges) => {
+  // 1. Update UI instantly (React Flow does this via onEdgesChange, 
+  // but we handle the side effects here)
+  deletedEdges.forEach((edge) => {
+    console.log(`LOOM: Cutting thread ${edge.id}`);
+    
+    // 2. Sync with backend in the background
+    deleteConnection(edge.id).catch(err => 
+      console.error(`Failed to sever connection ${edge.id}:`, err)
+    );
+  });
+}, []);
 
   // --- 5. RENDER ---
   return (

@@ -7,6 +7,189 @@
         "description": "Loop 1+1 until 10 using self-routing add node",
         "createdAt": "2026-01-07T02:00:00Z"
     },
-    "nodes": [],
+    "nodes": [
+        {
+            "nodeId": "node_1",
+            "positionId": "pos_1",
+            "name": "add_node",
+            "position": {
+                "x": -659.0005335222658,
+                "y": -31.344049181880674
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        },
+        {
+            "nodeId": "node_2",
+            "positionId": "pos_2",
+            "name": "add_node",
+            "position": {
+                "x": -311.4678738237684,
+                "y": 6.916427115201608
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        },
+        {
+            "nodeId": "node_3",
+            "positionId": "pos_3",
+            "name": "add_node",
+            "position": {
+                "x": -550.5958506805326,
+                "y": 299.44965213664324
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        },
+        {
+            "nodeId": "node_4",
+            "positionId": "pos_4",
+            "name": "add_node",
+            "position": {
+                "x": -70.42972029046383,
+                "y": 102.88413995586046
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        },
+        {
+            "nodeId": "node_5",
+            "positionId": "pos_5",
+            "name": "input_node",
+            "position": {
+                "x": 263.5601149388649,
+                "y": 21.18878457602466
+            },
+            "input": [
+                {
+                    "var": "input"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "input"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\input_node.py",
+            "entryFunction": "input_node",
+            "metadata": {
+                "operation": "input"
+            }
+        },
+        {
+            "nodeId": "node_6",
+            "positionId": "pos_6",
+            "name": "add_node",
+            "position": {
+                "x": 420.0842361327899,
+                "y": 633.8449136199646
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        },
+        {
+            "nodeId": "node_7",
+            "positionId": "pos_7",
+            "name": "add_node",
+            "position": {
+                "x": 384.4575225419218,
+                "y": 782.9493075373017
+            },
+            "input": [
+                {
+                    "var": "inputs"
+                },
+                {
+                    "var": "variables"
+                }
+            ],
+            "output": [
+                "result"
+            ],
+            "ref": "script_node",
+            "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\add_node.py",
+            "entryFunction": "add_node",
+            "metadata": {
+                "operation": "add"
+            }
+        }
+    ],
     "connections": []
 }

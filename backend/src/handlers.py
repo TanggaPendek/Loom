@@ -116,6 +116,8 @@ def project_load_request(payload):
         print("ERROR in handle_select_project:", e)
         return {"status": "error", "message": str(e)}
 
+import re
+
 def graph_node_add(payload):
     """Adds a node dynamically using frontend payload and node index from nodeindex.json"""
     try:
@@ -138,11 +140,21 @@ def graph_node_add(payload):
             graph_content = json.load(f)
 
         nodes = graph_content.get("nodes", [])
-        node_count = len(nodes) + 1
-        node_id = f"node_{node_count}"
-        position_id = f"pos_{node_count}"
 
-     
+        # --- FIX: Predictable Numbering (Check highest existing ID) ---
+        max_id = 0
+        for n in nodes:
+            # Extract number from "node_X"
+            match = re.search(r'node_(\d+)', n.get("nodeId", "0"))
+            if match:
+                num = int(match.group(1))
+                if num > max_id:
+                    max_id = num
+        
+        next_num = max_id + 1
+        node_id = f"node_{next_num}"
+        position_id = f"pos_{next_num}"
+
         if not NODE_INDEX_PATH.exists():
             return {"status": "error", "message": "Node index not found"}
 
@@ -156,14 +168,14 @@ def graph_node_add(payload):
 
         template = next((n for n in node_index if n["name"].lower() == node_type_name.lower()), None)
         if not template:
-            return {"status": "error", "message": f"Node type '{node_type_name}' not found in node index"}
+            return {"status": "error", "message": f"Node type '{node_type_name}' not found"}
 
-        # --- Dynamic inputs/outputs ---
+        # --- FIX: Input/Output problem (Handled by pulling from template) ---
         dynamic_inputs = [{"var": inp} for inp in template.get("dynamic", {}).get("inputs", [])]
         dynamic_outputs = template.get("dynamic", {}).get("outputs", [])
 
         # --- Position ---
-        pos_x = payload.get("x", 100 * node_count)
+        pos_x = payload.get("x", 100 * next_num)
         pos_y = payload.get("y", 100)
 
         new_node = {
@@ -190,7 +202,6 @@ def graph_node_add(payload):
     except Exception as e:
         print("ERROR in graph_node_add:", e)
         return {"status": "error", "message": str(e)}
-    
 def graph_node_delete(payload):
     """Removes a node and its associated edges from the project JSON."""
     try:

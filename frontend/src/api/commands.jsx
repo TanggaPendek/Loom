@@ -45,5 +45,20 @@ export const deleteGraphNode = (nodeId) =>
 export const moveGraphNode = (nodeId, x, y) =>
   request("graph_node_edit", { nodeId, updates: { position: { x, y } } });
 
+
+/* ---------- CONNECTIONS (Actions) ---------- */
+export const createConnection = (params) => {
+  return request("connection_create", {
+    sourceNodeId: params.source,
+    targetNodeId: params.target,
+    sourceOutput: params.sourceHandle, // e.g., "out_1"
+    targetInput: params.targetHandle,   // e.g., "var_1"
+  });
+};
+
+export const deleteConnection = (connectionId) => 
+  request("connection_delete", { connectionId });
+
+
 // Legacy alias for backward compatibility (do not break old imports)
 export const updateNodeData = (nodeId, updates) => editGraphNode(nodeId, updates);
