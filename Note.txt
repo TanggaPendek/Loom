@@ -4,3 +4,6 @@ certain might require manual testing for check it working or not
 frontend need high attention
 using the .env for standarize main variable
 implementing new and more basic node to be use
+
+
+next todo is the edge add and delete then do the finish signal

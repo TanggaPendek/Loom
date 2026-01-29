@@ -1,103 +1,92 @@
 import asyncio
-from collections import deque
-from pathlib import Path
-from typing import Dict, List, Optional
+from collections import defaultdict, deque
+from typing import Dict, Any, Tuple, Optional
+
+from executor.engine.engine_signal import EngineSignalHub
 from executor.engine.node_loader import NodeLoader
-from executor.engine.variable_manager import VariableManager
 
 class ExecutionManager:
-    def __init__(self, nodes=None, connections=None, signal_hub=None):
+    def __init__(self, nodes, connections, signal_hub: Optional[EngineSignalHub] = None):
+        self.nodes: Dict[str, dict] = {}
+        self.connections = connections
         self.signal_hub = signal_hub
-        self.connections = connections or []
-        self.stopped = False
-        self.nodes = {node["nodeId"]: node for node in nodes} if nodes else {}
-        self.loaded_nodes = {}
-        self.var_mgr = None
-        
-        if signal_hub:
-            signal_hub.on("engine_stop", self.on_stop_request)
 
-    async def initialize_async(self, nodes, nodebank_path, project_path=None):
-        """Initializes the loader and variable manager concurrently."""
-        node_loader = NodeLoader(nodebank_path, self.signal_hub)
-        var_mgr = VariableManager(self.signal_hub)
-        
-        # Preload custom python nodes and initialize the variable state
-        tasks = [
-            node_loader.preload_nodes_async(nodes), 
-            var_mgr.init_variables_async(nodes)
-        ]
-        
-        results = await asyncio.gather(*tasks)
-        self.loaded_nodes = results[0]
-        self.var_mgr = var_mgr
-        self.nodes = {node["nodeId"]: node for node in nodes}
+        # Runtime state
+        self.functions: Dict[str, Any] = {}
+        self.input_buckets: Dict[Tuple[str, int], Any] = {}
+        self.ready_queue = deque()
 
-    def on_stop_request(self, payload=None):
-        self.stopped = True
+        # Graph structure
+        self.incoming_count = defaultdict(int)
+        self.outgoing = defaultdict(list)
 
-    async def run_async(self) -> None:
-        """Executes the graph based on node connections and logic."""
-        if self.signal_hub:
-            self.signal_hub.emit("engine_run", {"status": "started"})
+    async def initialize_async(self, nodes: list, nodebank_path=None, project_path=None):
+        # Load all node functions
+        loader = NodeLoader(nodebank_path=nodebank_path, signal_hub=self.signal_hub)
+        self.functions = await loader.preload_nodes_async(nodes)
 
-        try:
-            queue = deque()
-            executed_count = 0
-            
-            # Step 1: Find Entry Points (Nodes with no variable inputs)
-            for node_id, node in self.nodes.items():
-                if all(not ("var" in inp) for inp in node.get("input", [])):
-                    queue.append(node_id)
+        # Store node definitions
+        for node in nodes:
+            self.nodes[node["nodeId"]] = node
 
-            # Step 2: Main Execution Loop
-            while queue and executed_count < 10000:
-                if self.stopped: break
-                
-                node_id = queue.popleft()
-                node = self.nodes[node_id]
-                func = self.loaded_nodes.get(node_id)
+        # --- NEW: Pre-fill input buckets with defaults ---
+        for node_id, node in self.nodes.items():
+            for i, inp in enumerate(node.get("input", [])):
+                self.input_buckets[(node_id, i)] = inp.get("value", None)
 
-                if not func:
-                    print(f"[ENGINE ERROR] No function loaded for node: {node_id}")
+        # Build graph connections
+        for conn in self.connections:
+            src = conn["sourceNodeId"]
+            tgt = conn["targetNodeId"]
+            src_port = conn.get("sourcePort", 0)
+            tgt_port = conn.get("targetPort", 0)
+            self.outgoing[src].append((src_port, tgt, tgt_port))
+            self.incoming_count[tgt] += 1
+
+        # Entry nodes = no incoming connections
+        for node_id in self.nodes:
+            if self.incoming_count[node_id] == 0:
+                self.ready_queue.append(node_id)
+
+
+
+
+    async def run_async(self):
+        while self.ready_queue:
+            node_id = self.ready_queue.popleft()
+            func = self.functions.get(node_id)
+            if not func:
+                print(f"[ExecutionManager] Node {node_id} skipped: function not loaded")
+                continue
+
+            # Gather inputs blindly (all ports starting from 0)
+            inputs = []
+            i = 0
+            while (node_id, i) in self.input_buckets:
+                inputs.append(self.input_buckets[(node_id, i)])
+                i += 1
+
+            # Execute node
+            try:
+                result = func(*inputs)
+                if asyncio.iscoroutine(result):
+                    result = await result
+            except Exception as e:
+                print(f"[ExecutionManager] Node {node_id} failed: {e}")
+                continue
+
+            # Normalize outputs
+            if not isinstance(result, (list, tuple)):
+                result = [result]
+
+            # Route outputs blindly
+            for src_port, tgt_id, tgt_port in self.outgoing.get(node_id, []):
+                if src_port >= len(result):
                     continue
+                value = result[src_port]
+                self.input_buckets[(tgt_id, tgt_port)] = value
+                self.ready_queue.append(tgt_id)
 
-                if self.signal_hub:
-                    self.signal_hub.emit("engine_node_started", {"nodeId": node_id})
-
-                # Fetch data and run logic
-                inputs = self.var_mgr.get_input(node)
-                output = await asyncio.to_thread(func, inputs, self.var_mgr.variables)
-                
-                # Update State
-                self.var_mgr.set_output(node_id, output)
-                executed_count += 1
-
-                if self.signal_hub:
-                    self.signal_hub.emit("engine_node_finished", {"nodeId": node_id, "output": output})
-
-                # Step 3: Reactive Routing with Conditional Logic
-                for conn in self.connections:
-                    if conn["sourceNodeId"] != node_id:
-                        continue
-
-                    target_id = conn["targetNodeId"]
-                    label = str(conn.get("metadata", {}).get("label", "")).lower()
-
-                    # Logic Check for Condition Nodes
-                    if node.get("metadata", {}).get("operation") == "condition":
-                        is_true = bool(output)
-                        if is_true and "true" not in label:
-                            continue
-                        if not is_true and "false" not in label:
-                            continue
-                    
-                    queue.append(target_id)
-
+            # Emit signal if hub exists
             if self.signal_hub:
-                self.signal_hub.emit("engine_stop", {"status": "finished"})
-                
-        except Exception as e:
-            if self.signal_hub:
-                self.signal_hub.emit("engine_error", {"error": str(e)})
-            raise e
+                self.signal_hub.emit("node_executed", {"nodeId": node_id, "output": result})

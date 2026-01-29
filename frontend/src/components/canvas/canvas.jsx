@@ -14,9 +14,9 @@ import LoomEdge from "../universal/loomEdge";
 import { loadGraph as loadGraphAPI } from "../../api/commands";
 import { loadGraph } from "./graphLoader";
 import CottonEdge from "./cottonEdge";
-import { 
-  deleteGraphNode, 
-  moveGraphNode, 
+import {
+  deleteGraphNode,
+  moveGraphNode,
   addGraphNode,
   editGraphNode,
   createConnection,
@@ -76,61 +76,63 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     event.dataTransfer.dropEffect = "move";
   }, []);
 
- const onDrop = useCallback(
-  async (event) => {
-    event.preventDefault();
-    if (!reactFlowInstance) return;
+  const onDrop = useCallback(
+    async (event) => {
+      event.preventDefault();
+      if (!reactFlowInstance) return;
 
-    const rawData = event.dataTransfer.getData("application/reactflow");
-    if (!rawData) return;
-    const droppedData = JSON.parse(rawData);
+      const rawData = event.dataTransfer.getData("application/reactflow");
+      if (!rawData) return;
+      const droppedData = JSON.parse(rawData);
 
-    // Calculate position with a slight offset to center the node
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const position = reactFlowInstance.project({
-      x: event.clientX - bounds.left - 50,
-      y: event.clientY - bounds.top - 20,
-    });
+      // Calculate position with a slight offset to center the node
+      const bounds = event.currentTarget.getBoundingClientRect();
+      const position = reactFlowInstance.project({
+        x: event.clientX - bounds.left - 50,
+        y: event.clientY - bounds.top - 20,
+      });
 
-    /* --- API SECTION --- */
-    const response = await addGraphNode(
-      droppedData.label, 
-      position.x,
-      position.y
-    );
+      /* --- API SECTION --- */
+      const response = await addGraphNode(
+        droppedData.label,
+        position.x,
+        position.y,
+      );
 
-    // CRITICAL: The dispatcher returns handler data inside 'result'
-    if (response?.status === "success" && response.result?.node) {
-      const backendNode = response.result.node;
+      // CRITICAL: The dispatcher returns handler data inside 'result'
+      if (response?.status === "success" && response.result?.node) {
+        const backendNode = response.result.node;
 
-      const newNode = {
-        id: backendNode.nodeId,
-        type: "dynamicNode",
-        position: backendNode.position,
-        data: {
-          label: backendNode.name,
-          // Map inputs to handle both {var: ...} and {value: ...}
-          inputs: backendNode.input.map((inp, idx) => ({
-            id: inp.var || `input_${idx}`, 
-            label: inp.var || "value",
-            type: inp.var ? "variable" : "constant"
-          })),
-          // Map outputs as strings from the list
-          outputs: backendNode.output.map((out) => ({
-            id: out,
-            label: out
-          })),
-          onChange: (key, value) => onInputChange(backendNode.nodeId, key, value),
-        },
-      };
+        const newNode = {
+          id: backendNode.nodeId,
+          type: "dynamicNode",
+          position: backendNode.position,
+          data: {
+            label: backendNode.name,
+            // Map inputs to handle both {var: ...} and {value: ...}
+            inputs: backendNode.input.map((inp, idx) => ({
+              var: inp.var,
+              value: "",
+            })),
+            // Map outputs as strings from the list
+            outputs: backendNode.output.map((out) => ({
+              id: out,
+              label: out,
+            })),
+            onChange: (key, value) =>
+              onInputChange(backendNode.nodeId, key, value),
+          },
+        };
 
-      setNodes((nds) => nds.concat(newNode));
-    } else {
-      console.error("LOOM Error: Check backend handler for 'node_create_request'");
-    }
-  },
-  [reactFlowInstance, setNodes, onInputChange]
-);
+        setNodes((nds) => nds.concat(newNode));
+      } else {
+        console.error(
+          "LOOM Error: Check backend handler for 'node_create_request'",
+        );
+      }
+    },
+    [reactFlowInstance, setNodes, onInputChange],
+  );
 
   const onNodesChange = useCallback(
     (chs) => setNodes((nds) => applyNodeChanges(chs, nds)),
@@ -142,15 +144,15 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
   );
 
   const onNodesDelete = useCallback(async (deletedNodes) => {
-      for (const node of deletedNodes) {
-        try {
-          console.log(`LOOM: Severing node ${node.id}`);
-          await deleteGraphNode(node.id);
-        } catch (error) {
-          console.error("Failed to delete node:", error);
-        }
+    for (const node of deletedNodes) {
+      try {
+        console.log(`LOOM: Severing node ${node.id}`);
+        await deleteGraphNode(node.id);
+      } catch (error) {
+        console.error("Failed to delete node:", error);
       }
-    }, []);
+    }
+  }, []);
 
   // --- 3. REFRESH LOGIC ---
   const refreshGraph = useCallback(async () => {
@@ -200,47 +202,52 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     onNodesUpdate?.(nodes);
   }, [nodes]);
 
-// --- 6. EDGE HANDLERS (Optimistic Weaving) ---
+  // --- 6. EDGE HANDLERS (Optimistic Weaving) ---
 
-const onConnect = useCallback((params) => {
-  // 1. Generate a temporary ID for immediate UI feedback
-  const tempId = `edge-${Date.now()}`;
-  const newEdge = { 
-    ...params, 
-    id: tempId,
-    type: "cotton", 
-    animated: false 
-  };
+  const onConnect = useCallback(
+    (params) => {
+      // 1. Generate a temporary ID for immediate UI feedback
+      const tempId = `edge-${Date.now()}`;
+      const newEdge = {
+        ...params,
+        id: tempId,
+        type: "cotton",
+        animated: false,
+      };
 
-  // 2. Update UI instantly
-  setEdges((eds) => addEdge(newEdge, eds));
-  console.log(`LOOM: Optimistically weaving ${params.sourceHandle} -> ${params.targetHandle}`);
+      // 2. Update UI instantly
+      setEdges((eds) => addEdge(newEdge, eds));
+      console.log(
+        `LOOM: Optimistically weaving ${params.sourceHandle} -> ${params.targetHandle}`,
+      );
 
-  // 3. Fire and forget (backend sync)
-  createConnection(
-    params.source, 
-    params.target, 
-    params.sourceHandle, 
-    params.targetHandle
-  ).catch(err => {
-    console.error("LOOM Weaving Sync Failed:", err);
-    // Optional: Remove the edge or mark it "tangled" (red) if the backend fails
-    setEdges((eds) => eds.filter(e => e.id !== tempId));
-  });
-}, [setEdges]);
+      // 3. Fire and forget (backend sync)
+      createConnection(
+        params.source,
+        params.target,
+        params.sourceHandle,
+        params.targetHandle,
+      ).catch((err) => {
+        console.error("LOOM Weaving Sync Failed:", err);
+        // Optional: Remove the edge or mark it "tangled" (red) if the backend fails
+        setEdges((eds) => eds.filter((e) => e.id !== tempId));
+      });
+    },
+    [setEdges],
+  );
 
-const onEdgesDelete = useCallback((deletedEdges) => {
-  // 1. Update UI instantly (React Flow does this via onEdgesChange, 
-  // but we handle the side effects here)
-  deletedEdges.forEach((edge) => {
-    console.log(`LOOM: Cutting thread ${edge.id}`);
-    
-    // 2. Sync with backend in the background
-    deleteConnection(edge.id).catch(err => 
-      console.error(`Failed to sever connection ${edge.id}:`, err)
-    );
-  });
-}, []);
+  const onEdgesDelete = useCallback((deletedEdges) => {
+    // 1. Update UI instantly (React Flow does this via onEdgesChange,
+    // but we handle the side effects here)
+    deletedEdges.forEach((edge) => {
+      console.log(`LOOM: Cutting thread ${edge.id}`);
+
+      // 2. Sync with backend in the background
+      deleteConnection(edge.id).catch((err) =>
+        console.error(`Failed to sever connection ${edge.id}:`, err),
+      );
+    });
+  }, []);
 
   // --- 5. RENDER ---
   return (
