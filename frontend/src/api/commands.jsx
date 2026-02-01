@@ -47,18 +47,16 @@ export const moveGraphNode = (nodeId, x, y) =>
 
 
 /* ---------- CONNECTIONS (Actions) ---------- */
-export const createConnection = (params) => {
+export const createConnection = (sourceNodeId, sourcePort, targetNodeId, targetPort) => {
   return request("connection_create", {
-    sourceNodeId: params.source,
-    targetNodeId: params.target,
-    sourceOutput: params.sourceHandle, // e.g., "out_1"
-    targetInput: params.targetHandle,   // e.g., "var_1"
+    sourceNodeId,
+    sourcePort,    // Backend expects integer index (0, 1, 2...)
+    targetNodeId,
+    targetPort     // Backend expects integer index (0, 1, 2...)
   });
 };
 
 export const deleteConnection = (connectionId) => 
   request("connection_delete", { connectionId });
-
-
 // Legacy alias for backward compatibility (do not break old imports)
 export const updateNodeData = (nodeId, updates) => editGraphNode(nodeId, updates);

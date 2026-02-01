@@ -202,39 +202,99 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     onNodesUpdate?.(nodes);
   }, [nodes]);
 
+const resolvePortIndex = (nodeId, handleId, type) => {
+  const node = nodes.find((n) => n.id === nodeId);
+  if (!node) {
+    console.error(`Node not found: ${nodeId}`);
+    return -1;
+  }
+
+  if (type === "source") {
+    // outputs is an array like [{id: "Value", label: "Value"}, ...] or ["Value", ...]
+    const index = node.data.outputs.findIndex(
+      (o) => (typeof o === "string" ? o : o.id) === handleId,
+    );
+    if (index < 0) {
+      console.error(`Output handle not found: ${handleId} in node ${nodeId}`, node.data.outputs);
+    }
+    return index;
+  }
+
+  if (type === "target") {
+    // inputs is an array like [{var: "inputs", value: ""}, ...]
+    const index = node.data.inputs.findIndex(
+      (i) => (i.var ?? "") === handleId,
+    );
+    if (index < 0) {
+      console.error(`Input handle not found: ${handleId} in node ${nodeId}`, node.data.inputs);
+    }
+    return index;
+  }
+
+  return -1;
+};
+
+
   // --- 6. EDGE HANDLERS (Optimistic Weaving) ---
 
-  const onConnect = useCallback(
-    (params) => {
-      // 1. Generate a temporary ID for immediate UI feedback
-      const tempId = `edge-${Date.now()}`;
-      const newEdge = {
-        ...params,
-        id: tempId,
-        type: "cotton",
-        animated: false,
-      };
+const onConnect = useCallback(
+  (params) => {
+    // 1. Optimistic UI update
+    const tempId = `edge-${Date.now()}`;
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          id: tempId,
+          type: "cotton",
+          animated: false,
+        },
+        eds,
+      ),
+    );
 
-      // 2. Update UI instantly
-      setEdges((eds) => addEdge(newEdge, eds));
-      console.log(
-        `LOOM: Optimistically weaving ${params.sourceHandle} -> ${params.targetHandle}`,
-      );
+    // 2. Resolve handle IDs → port indices
+    const sourcePort = resolvePortIndex(
+      params.source,
+      params.sourceHandle,
+      "source",
+    );
+    const targetPort = resolvePortIndex(
+      params.target,
+      params.targetHandle,
+      "target",
+    );
 
-      // 3. Fire and forget (backend sync)
-      createConnection(
-        params.source,
-        params.target,
-        params.sourceHandle,
-        params.targetHandle,
-      ).catch((err) => {
-        console.error("LOOM Weaving Sync Failed:", err);
-        // Optional: Remove the edge or mark it "tangled" (red) if the backend fails
-        setEdges((eds) => eds.filter((e) => e.id !== tempId));
+    // 3. Validation
+    if (sourcePort < 0 || targetPort < 0) {
+      console.error("LOOM Error: Invalid port mapping", {
+        source: params.source,
+        sourceHandle: params.sourceHandle,
+        sourcePort,
+        target: params.target,
+        targetHandle: params.targetHandle,
+        targetPort,
       });
-    },
-    [setEdges],
-  );
+      // Optionally: Remove the optimistic edge
+      setEdges((eds) => eds.filter((e) => e.id !== tempId));
+      return;
+    }
+
+    // 4. Send to backend with correct signature
+    createConnection(
+      params.source,      // sourceNodeId
+      sourcePort,         // sourcePort (integer)
+      params.target,      // targetNodeId
+      targetPort          // targetPort (integer)
+    ).catch((err) => {
+      console.error("Backend failed to create connection:", err);
+      // Remove optimistic edge on failure
+      setEdges((eds) => eds.filter((e) => e.id !== tempId));
+    });
+  },
+  [nodes], // Add setEdges to dependencies if needed
+);
+
 
   const onEdgesDelete = useCallback((deletedEdges) => {
     // 1. Update UI instantly (React Flow does this via onEdgesChange,
