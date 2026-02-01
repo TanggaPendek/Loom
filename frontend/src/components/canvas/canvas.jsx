@@ -58,24 +58,45 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
   }, [onSelect]);
 
   // --- 2. INPUT HANDLER (Fixed Scope) ---
-  const onInputChange = useCallback((nodeId, index, val) => {
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          const nextInputs = [...(node.data.inputs || [])];
-          nextInputs[index] = { ...nextInputs[index], value: val };
-          return { ...node, data: { ...node.data, inputs: nextInputs } };
-        }
-        return node;
-      }),
-    );
-  }, []);
+const onInputChange = useCallback((nodeId, index, val) => {
+  // 1. Update UI immediately
+  setNodes((nds) =>
+    nds.map((node) => {
+      if (node.id === nodeId) {
+        const nextInputs = [...(node.data.inputs || [])];
+        nextInputs[index] = { ...nextInputs[index], value: val };
+        return { ...node, data: { ...node.data, inputs: nextInputs } };
+      }
+      return node;
+    }),
+  );
+
+  // 2. Sync with backend (debounced fire-and-forget)
+  updateGraphNodeInput(nodeId, index, val).catch((err) => {
+    console.error(`Failed to update input value:`, err);
+  });
+}, []);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+
+  const onNodeDragStop = useCallback(
+  (event, node) => {
+    console.log(`LOOM: Node ${node.id} moved to (${node.position.x}, ${node.position.y})`);
+    
+    // Update backend with new position
+    moveGraphNode(node.id, node.position.x, node.position.y).catch((err) => {
+      console.error(`Failed to update node position:`, err);
+    });
+
+    // Notify parent component
+    onNodesUpdate?.(nodes);
+  },
+  [nodes, onNodesUpdate]
+);
   const onDrop = useCallback(
     async (event) => {
       event.preventDefault();
@@ -138,11 +159,64 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate }) {
     (chs) => setNodes((nds) => applyNodeChanges(chs, nds)),
     [],
   );
-  const onEdgesChange = useCallback(
-    (chs) => setEdges((eds) => applyEdgeChanges(chs, eds)),
-    [],
-  );
+// Remove the current onEdgesChange and onEdgesDelete
+// Replace with this combined handler:
 
+const onEdgesChange = useCallback(
+  (changes) => {
+    // Intercept remove changes to sync with backend BEFORE updating UI
+    const removeChanges = changes.filter((c) => c.type === "remove");
+    
+    if (removeChanges.length > 0) {
+      removeChanges.forEach((change) => {
+        const edge = edges.find((e) => e.id === change.id);
+        if (!edge) return;
+
+        console.log(`LOOM: Cutting thread ${edge.id}`);
+
+        // Resolve the ports from the edge handles
+        const sourcePort = resolvePortIndex(
+          edge.source,
+          edge.sourceHandle,
+          "source"
+        );
+        const targetPort = resolvePortIndex(
+          edge.target,
+          edge.targetHandle,
+          "target"
+        );
+
+        // Validate ports exist
+        if (sourcePort < 0 || targetPort < 0) {
+          console.error("LOOM Error: Invalid port mapping for edge deletion", {
+            edge,
+            sourcePort,
+            targetPort
+          });
+          return;
+        }
+
+        // Send full payload to backend (fire-and-forget)
+        deleteConnection(
+          edge.source,
+          sourcePort,
+          edge.target,
+          targetPort
+        ).catch((err) => {
+          console.error(`Failed to sever connection ${edge.id}:`, err);
+        });
+      });
+    }
+
+    // Apply all changes to UI (including the removes)
+    setEdges((eds) => applyEdgeChanges(changes, eds));
+  },
+  [edges, nodes] // Add nodes dependency for resolvePortIndex
+);
+
+// REMOVE the old onEdgesDelete callback entirely
+// DELETE THIS:
+// const onEdgesDelete = useCallback((deletedEdges) => { ... }, []);
   const onNodesDelete = useCallback(async (deletedNodes) => {
     for (const node of deletedNodes) {
       try {
@@ -296,18 +370,43 @@ const onConnect = useCallback(
 );
 
 
-  const onEdgesDelete = useCallback((deletedEdges) => {
-    // 1. Update UI instantly (React Flow does this via onEdgesChange,
-    // but we handle the side effects here)
-    deletedEdges.forEach((edge) => {
-      console.log(`LOOM: Cutting thread ${edge.id}`);
+const onEdgesDelete = useCallback((deletedEdges) => {
+  deletedEdges.forEach((edge) => {
+    console.log(`LOOM: Cutting thread ${edge.id}`);
 
-      // 2. Sync with backend in the background
-      deleteConnection(edge.id).catch((err) =>
-        console.error(`Failed to sever connection ${edge.id}:`, err),
-      );
+    // Resolve the ports from the edge handles
+    const sourcePort = resolvePortIndex(
+      edge.source,
+      edge.sourceHandle,
+      "source"
+    );
+    const targetPort = resolvePortIndex(
+      edge.target,
+      edge.targetHandle,
+      "target"
+    );
+
+    // Validate ports exist
+    if (sourcePort < 0 || targetPort < 0) {
+      console.error("LOOM Error: Invalid port mapping for edge deletion", {
+        edge,
+        sourcePort,
+        targetPort
+      });
+      return;
+    }
+
+    // Send full payload to backend
+    deleteConnection(
+      edge.source,      // sourceNodeId
+      sourcePort,       // sourcePort (integer)
+      edge.target,      // targetNodeId
+      targetPort        // targetPort (integer)
+    ).catch((err) => {
+      console.error(`Failed to sever connection ${edge.id}:`, err);
     });
-  }, []);
+  });
+}, [nodes]);
 
   // --- 5. RENDER ---
   return (
@@ -365,11 +464,9 @@ const onConnect = useCallback(
         onNodesDelete={onNodesDelete}
         onConnect={onConnect}
         onEdgesDelete={onEdgesDelete}
+        onNodeDragStop={onNodeDragStop}
         fitView
         className="relative z-10"
-        onNodeDragStop={(event, node) => {
-          onNodesUpdate?.(nodes); // Only update once the drag is finished
-        }}
       >
         <Background variant="dots" color="#10b981" gap={32} opacity={0.15} />
         <Controls

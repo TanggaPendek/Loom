@@ -254,3 +254,266 @@ def graph_node_delete(payload):
     except Exception as e:
         print("ERROR in graph_node_delete:", e)
         return {"status": "error", "message": str(e)}
+
+
+def connection_create(payload):
+    """Creates a connection between two nodes in the project graph"""
+    try:
+        if not STATE_PATH.exists():
+            return {"status": "error", "message": "state.json missing"}
+
+        with open(STATE_PATH, "r", encoding="utf-8-sig") as f:
+            state_data = json.load(f)
+
+        project_path_str = state_data.get("projectPath")
+        if not project_path_str:
+            return {"status": "error", "message": "No projectPath in state"}
+
+        project_path = Path(project_path_str)
+        if not project_path.exists():
+            return {"status": "error", "message": "Project file not found"}
+
+        # --- Load graph ---
+        with open(project_path, "r", encoding="utf-8-sig") as f:
+            graph_content = json.load(f)
+
+        # --- Extract payload ---
+        source_node_id = payload.get("sourceNodeId")
+        source_port = payload.get("sourcePort")
+        target_node_id = payload.get("targetNodeId")
+        target_port = payload.get("targetPort")
+
+        if None in [source_node_id, source_port, target_node_id, target_port]:
+            return {"status": "error", "message": "Missing connection parameters"}
+
+        # --- Validate nodes exist ---
+        nodes = graph_content.get("nodes", [])
+        source_exists = any(n.get("nodeId") == source_node_id for n in nodes)
+        target_exists = any(n.get("nodeId") == target_node_id for n in nodes)
+
+        if not source_exists or not target_exists:
+            return {"status": "error", "message": "Source or target node not found"}
+
+        # --- Create connection object ---
+        new_connection = {
+            "sourceNodeId": source_node_id,
+            "sourcePort": source_port,
+            "targetNodeId": target_node_id,
+            "targetPort": target_port
+        }
+
+        # --- Check for duplicate ---
+        connections = graph_content.get("connections", [])
+        duplicate = any(
+            c.get("sourceNodeId") == source_node_id and
+            c.get("sourcePort") == source_port and
+            c.get("targetNodeId") == target_node_id and
+            c.get("targetPort") == target_port
+            for c in connections
+        )
+
+        if duplicate:
+            return {"status": "error", "message": "Connection already exists"}
+
+        # --- Add connection ---
+        connections.append(new_connection)
+        graph_content["connections"] = connections
+
+        # --- Save ---
+        with open(project_path, "w", encoding="utf-8") as f:
+            json.dump(graph_content, f, indent=4)
+
+        return {"status": "ok", "connection": new_connection}
+
+    except Exception as e:
+        print("ERROR in connection_create:", e)
+        return {"status": "error", "message": str(e)}
+
+
+def connection_delete(payload):
+    """Deletes a connection between two nodes in the project graph"""
+    try:
+        if not STATE_PATH.exists():
+            return {"status": "error", "message": "state.json missing"}
+
+        with open(STATE_PATH, "r", encoding="utf-8-sig") as f:
+            state_data = json.load(f)
+
+        project_path_str = state_data.get("projectPath")
+        if not project_path_str:
+            return {"status": "error", "message": "No projectPath in state"}
+
+        project_path = Path(project_path_str)
+        if not project_path.exists():
+            return {"status": "error", "message": "Project file not found"}
+
+        # --- Load graph ---
+        with open(project_path, "r", encoding="utf-8-sig") as f:
+            graph_content = json.load(f)
+
+        # --- Extract payload ---
+        source_node_id = payload.get("sourceNodeId")
+        source_port = payload.get("sourcePort")
+        target_node_id = payload.get("targetNodeId")
+        target_port = payload.get("targetPort")
+
+        if None in [source_node_id, source_port, target_node_id, target_port]:
+            return {"status": "error", "message": "Missing connection parameters"}
+
+        # --- Find and remove connection ---
+        connections = graph_content.get("connections", [])
+        original_count = len(connections)
+
+        # Filter out the matching connection
+        graph_content["connections"] = [
+            c for c in connections
+            if not (
+                c.get("sourceNodeId") == source_node_id and
+                c.get("sourcePort") == source_port and
+                c.get("targetNodeId") == target_node_id and
+                c.get("targetPort") == target_port
+            )
+        ]
+
+        if len(graph_content["connections"]) == original_count:
+            return {"status": "error", "message": "Connection not found"}
+
+        # --- Save ---
+        with open(project_path, "w", encoding="utf-8") as f:
+            json.dump(graph_content, f, indent=4)
+
+        return {
+            "status": "ok",
+            "deletedConnection": {
+                "sourceNodeId": source_node_id,
+                "sourcePort": source_port,
+                "targetNodeId": target_node_id,
+                "targetPort": target_port
+            }
+        }
+
+    except Exception as e:
+        print("ERROR in connection_delete:", e)
+        return {"status": "error", "message": str(e)}
+
+def graph_node_update_input(payload):
+    """Updates a specific input value for a node"""
+    try:
+        if not STATE_PATH.exists():
+            return {"status": "error", "message": "state.json missing"}
+
+        with open(STATE_PATH, "r", encoding="utf-8-sig") as f:
+            state_data = json.load(f)
+
+        project_path_str = state_data.get("projectPath")
+        if not project_path_str:
+            return {"status": "error", "message": "No projectPath in state"}
+
+        project_path = Path(project_path_str)
+        if not project_path.exists():
+            return {"status": "error", "message": "Project file not found"}
+
+        # --- Load graph ---
+        with open(project_path, "r", encoding="utf-8-sig") as f:
+            graph_content = json.load(f)
+
+        # --- Extract payload ---
+        node_id = payload.get("nodeId")
+        input_index = payload.get("inputIndex")
+        value = payload.get("value")
+
+        if node_id is None or input_index is None:
+            return {"status": "error", "message": "Missing nodeId or inputIndex"}
+
+        # --- Find and update node ---
+        nodes = graph_content.get("nodes", [])
+        target_node = None
+        
+        for node in nodes:
+            if node.get("nodeId") == node_id:
+                target_node = node
+                break
+
+        if not target_node:
+            return {"status": "error", "message": f"Node '{node_id}' not found"}
+
+        # --- Update the input value ---
+        inputs = target_node.get("input", [])
+        if input_index >= len(inputs):
+            return {"status": "error", "message": f"Input index {input_index} out of range"}
+
+        inputs[input_index]["value"] = value
+
+        # --- Save ---
+        with open(project_path, "w", encoding="utf-8") as f:
+            json.dump(graph_content, f, indent=4)
+
+        return {
+            "status": "ok",
+            "nodeId": node_id,
+            "inputIndex": input_index,
+            "value": value
+        }
+
+    except Exception as e:
+        print("ERROR in graph_node_update_input:", e)
+        return {"status": "error", "message": str(e)}
+
+
+def graph_node_move(payload):
+    """Updates node position in the project graph"""
+    try:
+        if not STATE_PATH.exists():
+            return {"status": "error", "message": "state.json missing"}
+
+        with open(STATE_PATH, "r", encoding="utf-8-sig") as f:
+            state_data = json.load(f)
+
+        project_path_str = state_data.get("projectPath")
+        if not project_path_str:
+            return {"status": "error", "message": "No projectPath in state"}
+
+        project_path = Path(project_path_str)
+        if not project_path.exists():
+            return {"status": "error", "message": "Project file not found"}
+
+        # --- Load graph ---
+        with open(project_path, "r", encoding="utf-8-sig") as f:
+            graph_content = json.load(f)
+
+        # --- Extract payload ---
+        node_id = payload.get("nodeId")
+        x = payload.get("x")
+        y = payload.get("y")
+
+        if node_id is None or x is None or y is None:
+            return {"status": "error", "message": "Missing nodeId, x, or y"}
+
+        # --- Find and update node ---
+        nodes = graph_content.get("nodes", [])
+        target_node = None
+        
+        for node in nodes:
+            if node.get("nodeId") == node_id:
+                target_node = node
+                break
+
+        if not target_node:
+            return {"status": "error", "message": f"Node '{node_id}' not found"}
+
+        # --- Update position ---
+        target_node["position"] = {"x": x, "y": y}
+
+        # --- Save ---
+        with open(project_path, "w", encoding="utf-8") as f:
+            json.dump(graph_content, f, indent=4)
+
+        return {
+            "status": "ok",
+            "nodeId": node_id,
+            "position": {"x": x, "y": y}
+        }
+
+    except Exception as e:
+        print("ERROR in graph_node_move:", e)
+        return {"status": "error", "message": str(e)}
