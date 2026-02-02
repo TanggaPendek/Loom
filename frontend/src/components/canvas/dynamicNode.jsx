@@ -61,8 +61,8 @@ const DynamicNode = ({ id, data, selected }) => {
                   position={Position.Left}
                   id={handleId}
                   className={`!w-4 !h-4 !border-[3px] !-left-[30px] transition-all duration-300 shadow-sm ${isConnected
-                      ? "!bg-emerald-500 !border-emerald-200 scale-110"
-                      : "!bg-white !border-emerald-500"
+                    ? "!bg-emerald-500 !border-emerald-200 scale-110"
+                    : "!bg-white !border-emerald-500"
                     }`}
                 />
 
@@ -73,8 +73,8 @@ const DynamicNode = ({ id, data, selected }) => {
                 <input
                   type="text"
                   className={`nodrag w-full px-3 py-2 border-2 rounded-[12px] text-xs font-mono transition-all ${isConnected
-                      ? "bg-emerald-50/50 border-emerald-200 text-emerald-900"
-                      : "bg-white border-emerald-50 text-emerald-400 italic"
+                    ? "bg-emerald-50/50 border-emerald-200 text-emerald-900"
+                    : "bg-white border-emerald-50 text-emerald-400 italic"
                     } focus:outline-none focus:border-emerald-400`}
                   defaultValue={inp.value}
                   onBlur={(e) => {
@@ -123,8 +123,8 @@ const DynamicNode = ({ id, data, selected }) => {
                     position={Position.Right}
                     id={handleId}
                     className={`!w-4 !h-4 !border-[3px] !-right-[30px] transition-all duration-300 shadow-sm ${isConnected
-                        ? "!bg-rose-500 !border-rose-200 scale-110"
-                        : "!bg-white !border-rose-500"
+                      ? "!bg-rose-500 !border-rose-200 scale-110"
+                      : "!bg-white !border-rose-500"
                       }`}
                   />
                 </div>
