@@ -13,6 +13,7 @@ from .modules.project_manager import ProjectManager
 from .modules.node_manager import NodeManager
 from .modules.signal_hub import SignalHub
 from .modules.execution_manager import ExecutionManager
+from .modules.log_manager import LogManager
 from .api_router import create_dispatcher
 from .modules.index_service import IndexService
 
@@ -30,6 +31,7 @@ signal_hub = SignalHub()
 project_backend = ProjectManager(base_path=USERDATA_PATH, signal_hub=signal_hub)
 node_backend = NodeManager(base_path=NODEBANK_PATH / "custom", signal_hub=signal_hub)
 execution_manager = ExecutionManager(signal_hub=signal_hub)
+log_manager = LogManager(project_base_path=USERDATA_PATH)
 index_service = IndexService(
     project_base=USERDATA_PATH,
     node_bank_path=NODEBANK_PATH,
@@ -64,7 +66,7 @@ app = FastAPI(title="Loom Offline Backend")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
-app.include_router(create_dispatcher(signal_hub, project_backend))
+app.include_router(create_dispatcher(signal_hub, project_backend, log_manager))
 
 if __name__ == "__main__":
     print(f"Loom Backend active at http://127.0.0.1:8000")

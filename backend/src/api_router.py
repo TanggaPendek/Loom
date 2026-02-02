@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, HTTPException
 from typing import Dict, Any
 
-def create_dispatcher(signal_hub, project_backend):
+def create_dispatcher(signal_hub, project_backend, log_manager=None):
     router = APIRouter()
 
 
@@ -36,7 +36,8 @@ def create_dispatcher(signal_hub, project_backend):
     SYNC_MAP = {
         "startup": "startup_request",
         "load_graph": "load_graph_request",
-        "node_index": "node_index_request"
+        "node_index": "node_index_request",
+        "logs": "get_logs"
     }
 
     @router.post("/dispatch")
@@ -51,20 +52,40 @@ def create_dispatcher(signal_hub, project_backend):
             return {"status": "error", "message": f"Unknown action: {cmd}"}
         
         results = signal_hub.emit(signal_name, payload)
-        print(f"DEBUG: Signal {signal_name} returned results: {results}") # Add this
-        # --- IMPROVED CHECK ---
-        # Check if results exists, is not empty, and the first result is actually a dict
-        if not results or results[0] is None:
-            return {"status": "error", "message": f"Handler for {cmd} returned no data"}
-
-        if isinstance(results[0], dict) and results[0].get("status") == "ok":
-            return {"status": "success", "command": cmd, "result": results[0]}
+        print(f"DEBUG: Signal {signal_name} returned results: {results}")
         
-        return {"status": "error", "message": "Handler returned an invalid format", "raw": results[0]}
+        # Check if we got any results
+        if not results or len(results) == 0:
+            return {"status": "error", "message": f"No handlers registered for {cmd}"}
+        
+        # Get the first result
+        result = results[0]
+        
+        # If handler returned None, that's an error
+        if result is None:
+            return {"status": "error", "message": f"Handler for {cmd} returned no data"}
+        
+        # If handler returned a dict with status, use it
+        if isinstance(result, dict):
+            if result.get("status") == "ok":
+                return {"status": "success", "command": cmd, **result}
+            elif result.get("status") == "error":
+                return result  # Return error as-is
+            else:
+                # Has dict but no status field - assume success
+                return {"status": "success", "command": cmd, "result": result}
+        
+        # Handler returned something else (string, number, etc)
+        return {"status": "success", "command": cmd, "result": result}
 
     @router.get("/sync/{target}")
-    async def sync_data(target: str):
+    async def sync_data(target: str, since: str = None):
         """Data-fetching requests"""
+        # Special handling for logs (uses log_manager directly)
+        if target == "logs" and log_manager:
+            logs = log_manager.get_logs(since_timestamp=since)
+            return {"status": "ok", "logs": logs}
+        
         signal_name = SYNC_MAP.get(target)
         
         if not signal_name:

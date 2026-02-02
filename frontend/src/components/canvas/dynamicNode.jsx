@@ -29,10 +29,9 @@ const DynamicNode = ({ id, data, selected }) => {
   return (
     <div
       className={`bg-[#FCFDFB] border-2 rounded-[24px] shadow-xl transition-all duration-300
-        ${
-          selected
-            ? "border-emerald-500 ring-4 ring-emerald-500/10 scale-[1.02]"
-            : "border-emerald-100 shadow-emerald-100/20"
+        ${selected
+          ? "border-emerald-500 ring-4 ring-emerald-500/10 scale-[1.02]"
+          : "border-emerald-100 shadow-emerald-100/20"
         } active:scale-[0.98]`}
     >
       {/* Header */}
@@ -61,11 +60,10 @@ const DynamicNode = ({ id, data, selected }) => {
                   type="target"
                   position={Position.Left}
                   id={handleId}
-                  className={`!w-4 !h-4 !border-[3px] !-left-[30px] transition-all duration-300 shadow-sm ${
-                    isConnected
+                  className={`!w-4 !h-4 !border-[3px] !-left-[30px] transition-all duration-300 shadow-sm ${isConnected
                       ? "!bg-emerald-500 !border-emerald-200 scale-110"
                       : "!bg-white !border-emerald-500"
-                  }`}
+                    }`}
                 />
 
                 <label className="text-[9px] font-black text-emerald-800 uppercase tracking-widest ml-1">
@@ -74,15 +72,22 @@ const DynamicNode = ({ id, data, selected }) => {
 
                 <input
                   type="text"
-                  className={`nodrag w-full px-3 py-2 border-2 rounded-[12px] text-xs font-mono transition-all ${
-                    isConnected
+                  className={`nodrag w-full px-3 py-2 border-2 rounded-[12px] text-xs font-mono transition-all ${isConnected
                       ? "bg-emerald-50/50 border-emerald-200 text-emerald-900"
                       : "bg-white border-emerald-50 text-emerald-400 italic"
-                  } focus:outline-none focus:border-emerald-400`}
+                    } focus:outline-none focus:border-emerald-400`}
                   defaultValue={inp.value}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    onChangeValue?.(i, e.target.value);
+                  onBlur={(e) => {
+                    if (!isConnected) {
+                      e.stopPropagation();
+                      onChangeValue?.(i, e.target.value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !isConnected) {
+                      e.stopPropagation();
+                      e.target.blur(); // Trigger onBlur
+                    }
                   }}
                   disabled={isConnected} // disable input if linked
                   placeholder={isConnected ? "Linked..." : "Enter value..."}
@@ -108,9 +113,8 @@ const DynamicNode = ({ id, data, selected }) => {
                   className="relative flex items-center justify-end"
                 >
                   <span
-                    className={`text-[10px] font-black uppercase tracking-widest mr-2 transition-colors ${
-                      isConnected ? "text-rose-600" : "text-emerald-200"
-                    }`}
+                    className={`text-[10px] font-black uppercase tracking-widest mr-2 transition-colors ${isConnected ? "text-rose-600" : "text-emerald-200"
+                      }`}
                   >
                     {outLabel}
                   </span>
@@ -118,11 +122,10 @@ const DynamicNode = ({ id, data, selected }) => {
                     type="source"
                     position={Position.Right}
                     id={handleId}
-                    className={`!w-4 !h-4 !border-[3px] !-right-[30px] transition-all duration-300 shadow-sm ${
-                      isConnected
+                    className={`!w-4 !h-4 !border-[3px] !-right-[30px] transition-all duration-300 shadow-sm ${isConnected
                         ? "!bg-rose-500 !border-rose-200 scale-110"
                         : "!bg-white !border-rose-500"
-                    }`}
+                      }`}
                   />
                 </div>
               );
