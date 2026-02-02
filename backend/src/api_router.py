@@ -18,7 +18,7 @@ def create_dispatcher(signal_hub, project_backend):
         "graph_node_add": "project_node_add",
         "graph_node_delete": "project_node_delete",
         "graph_node_update_input": "graph_node_update_input_request",  
-        "graph_node_move": "graph_node_move_request",      
+        "graph_node_edit": "graph_node_move_request",      
         
         "connection_create": "connection_create_request",
         "connection_delete": "connection_delete_request",

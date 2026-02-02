@@ -483,8 +483,9 @@ def graph_node_move(payload):
 
         # --- Extract payload ---
         node_id = payload.get("nodeId")
-        x = payload.get("x")
-        y = payload.get("y")
+        position = payload.get("updates", {}).get("position", {})
+        x = position.get("x")
+        y = position.get("y")
 
         if node_id is None or x is None or y is None:
             return {"status": "error", "message": "Missing nodeId, x, or y"}

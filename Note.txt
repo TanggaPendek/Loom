@@ -7,3 +7,8 @@ implementing new and more basic node to be use
 
 
 next todo is the edge add and delete then do the finish signal
+
+next in line is to fix the node (value update,move) and edge frontend.. 
+then do the backend frontend update (the "logs"/print) and event return like done (now can simply do without websocket.. 
+just need to await update from backend (no async) but need to add stop/force ftop)
+also nice to reduce  terminal clutter..
