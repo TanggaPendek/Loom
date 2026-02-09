@@ -1,4 +1,4 @@
-export const loadGraph = (graphData) => {
+export const loadGraph = (graphData, onInputChange) => {
   // 1. Map Nodes first
   const nodes = graphData.nodes.map((n) => ({
     id: n.nodeId,
@@ -6,8 +6,15 @@ export const loadGraph = (graphData) => {
     position: n.position,
     data: {
       label: n.name,
-      inputs: n.input || [],
+      inputs: (n.input || []).map((inp) => ({
+        var: inp.var,
+        value: inp.value || "", // Load the actual saved value
+      })),
       outputs: n.output || [],
+      // ADD THIS after outputs:
+      onChange: onInputChange
+        ? (key, value) => onInputChange(n.nodeId, key, value)
+        : undefined,
     },
   }));
 

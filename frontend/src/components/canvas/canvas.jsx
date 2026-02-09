@@ -27,7 +27,12 @@ import {
 const NODE_TYPES = { dynamicNode: DynamicNode };
 const EDGE_TYPES = { loom: LoomEdge };
 
-export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onEdgesUpdate }) {
+export default function Canvas({
+  onRegisterRefresh,
+  onSelect,
+  onNodesUpdate,
+  onEdgesUpdate,
+}) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -90,10 +95,11 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-
   const onNodeDragStop = useCallback(
     (event, node) => {
-      console.log(`LOOM: Node ${node.id} moved to (${node.position.x}, ${node.position.y})`);
+      console.log(
+        `LOOM: Node ${node.id} moved to (${node.position.x}, ${node.position.y})`,
+      );
 
       // Update backend with new position
       moveGraphNode(node.id, node.position.x, node.position.y).catch((err) => {
@@ -103,7 +109,7 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
       // Notify parent component
       onNodesUpdate?.(nodes);
     },
-    [nodes, onNodesUpdate]
+    [nodes, onNodesUpdate],
   );
   const onDrop = useCallback(
     async (event) => {
@@ -129,8 +135,8 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
       );
 
       // CRITICAL: The dispatcher returns handler data inside 'result'
-      if (response?.status === "success" && response.result?.node) {
-        const backendNode = response.result.node;
+      if (response?.status === "ok" && response.node) {
+        const backendNode = response.node;
 
         const newNode = {
           id: backendNode.nodeId,
@@ -186,21 +192,24 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
           const sourcePort = resolvePortIndex(
             edge.source,
             edge.sourceHandle,
-            "source"
+            "source",
           );
           const targetPort = resolvePortIndex(
             edge.target,
             edge.targetHandle,
-            "target"
+            "target",
           );
 
           // Validate ports exist
           if (sourcePort < 0 || targetPort < 0) {
-            console.error("LOOM Error: Invalid port mapping for edge deletion", {
-              edge,
-              sourcePort,
-              targetPort
-            });
+            console.error(
+              "LOOM Error: Invalid port mapping for edge deletion",
+              {
+                edge,
+                sourcePort,
+                targetPort,
+              },
+            );
             return;
           }
 
@@ -209,7 +218,7 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
             edge.source,
             sourcePort,
             edge.target,
-            targetPort
+            targetPort,
           ).catch((err) => {
             console.error(`Failed to sever connection ${edge.id}:`, err);
           });
@@ -219,7 +228,7 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
       // Apply all changes to UI (including the removes)
       setEdges((eds) => applyEdgeChanges(changes, eds));
     },
-    [edges, nodes] // Add nodes dependency for resolvePortIndex
+    [edges, nodes], // Add nodes dependency for resolvePortIndex
   );
 
   // REMOVE the old onEdgesDelete callback entirely
@@ -251,6 +260,7 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
       if (res?.graph) {
         const { nodes: initialNodes, edges: initialEdges } = loadGraph(
           res.graph,
+          onInputChange, // Pass the callback
         );
         setNodes(initialNodes.map((n) => ({ ...n, type: "dynamicNode" })));
         setEdges(
@@ -265,7 +275,7 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
       setLoading(false);
       setIsAnimating(false);
     }
-  }, []);
+  }, [onInputChange]);
 
   // --- 4. LIFECYCLE ---
   useEffect(() => {
@@ -297,7 +307,10 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
         (o) => (typeof o === "string" ? o : o.id) === handleId,
       );
       if (index < 0) {
-        console.error(`Output handle not found: ${handleId} in node ${nodeId}`, node.data.outputs);
+        console.error(
+          `Output handle not found: ${handleId} in node ${nodeId}`,
+          node.data.outputs,
+        );
       }
       return index;
     }
@@ -308,14 +321,16 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
         (i) => (i.var ?? "") === handleId,
       );
       if (index < 0) {
-        console.error(`Input handle not found: ${handleId} in node ${nodeId}`, node.data.inputs);
+        console.error(
+          `Input handle not found: ${handleId} in node ${nodeId}`,
+          node.data.inputs,
+        );
       }
       return index;
     }
 
     return -1;
   };
-
 
   // --- 6. EDGE HANDLERS (Optimistic Weaving) ---
 
@@ -364,10 +379,10 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
 
       // 4. Send to backend with correct signature
       createConnection(
-        params.source,      // sourceNodeId
-        sourcePort,         // sourcePort (integer)
-        params.target,      // targetNodeId
-        targetPort          // targetPort (integer)
+        params.source, // sourceNodeId
+        sourcePort, // sourcePort (integer)
+        params.target, // targetNodeId
+        targetPort, // targetPort (integer)
       ).catch((err) => {
         console.error("Backend failed to create connection:", err);
         // Remove optimistic edge on failure
@@ -377,44 +392,46 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
     [nodes], // Add setEdges to dependencies if needed
   );
 
+  const onEdgesDelete = useCallback(
+    (deletedEdges) => {
+      deletedEdges.forEach((edge) => {
+        console.log(`LOOM: Cutting thread ${edge.id}`);
 
-  const onEdgesDelete = useCallback((deletedEdges) => {
-    deletedEdges.forEach((edge) => {
-      console.log(`LOOM: Cutting thread ${edge.id}`);
+        // Resolve the ports from the edge handles
+        const sourcePort = resolvePortIndex(
+          edge.source,
+          edge.sourceHandle,
+          "source",
+        );
+        const targetPort = resolvePortIndex(
+          edge.target,
+          edge.targetHandle,
+          "target",
+        );
 
-      // Resolve the ports from the edge handles
-      const sourcePort = resolvePortIndex(
-        edge.source,
-        edge.sourceHandle,
-        "source"
-      );
-      const targetPort = resolvePortIndex(
-        edge.target,
-        edge.targetHandle,
-        "target"
-      );
+        // Validate ports exist
+        if (sourcePort < 0 || targetPort < 0) {
+          console.error("LOOM Error: Invalid port mapping for edge deletion", {
+            edge,
+            sourcePort,
+            targetPort,
+          });
+          return;
+        }
 
-      // Validate ports exist
-      if (sourcePort < 0 || targetPort < 0) {
-        console.error("LOOM Error: Invalid port mapping for edge deletion", {
-          edge,
-          sourcePort,
-          targetPort
+        // Send full payload to backend
+        deleteConnection(
+          edge.source, // sourceNodeId
+          sourcePort, // sourcePort (integer)
+          edge.target, // targetNodeId
+          targetPort, // targetPort (integer)
+        ).catch((err) => {
+          console.error(`Failed to sever connection ${edge.id}:`, err);
         });
-        return;
-      }
-
-      // Send full payload to backend
-      deleteConnection(
-        edge.source,      // sourceNodeId
-        sourcePort,       // sourcePort (integer)
-        edge.target,      // targetNodeId
-        targetPort        // targetPort (integer)
-      ).catch((err) => {
-        console.error(`Failed to sever connection ${edge.id}:`, err);
       });
-    });
-  }, [nodes]);
+    },
+    [nodes],
+  );
 
   // --- 5. RENDER ---
   return (
@@ -435,8 +452,9 @@ export default function Canvas({ onRegisterRefresh, onSelect, onNodesUpdate, onE
                      text-emerald-500 hover:text-rose-500 transition-all duration-300 active:scale-90"
         >
           <svg
-            className={`w-6 h-6 transition-all duration-700 ease-in-out ${isAnimating ? "animate-spin text-rose-500" : ""
-              }`}
+            className={`w-6 h-6 transition-all duration-700 ease-in-out ${
+              isAnimating ? "animate-spin text-rose-500" : ""
+            }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

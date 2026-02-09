@@ -190,10 +190,10 @@
         }
     },
     {
-        "nodeId": "math_devide_node_math_divide_node",
+        "nodeId": "math_divide_node",
         "name": "Math Divide",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_devide_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_divide_node.py",
         "entryFunction": "math_divide_node",
         "dynamic": {
             "inputs": [
