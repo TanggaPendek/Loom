@@ -96,15 +96,15 @@ function App() {
         style={{ gridTemplateColumns: gridColumns }}
       >
         {/* LEFT SIDEBAR */}
-        <aside className="relative border-r border-emerald-100/20 bg-[#1A1C1B]/95 backdrop-blur-md overflow-hidden">
+        <aside className="relative border-r border-emerald-100/50 bg-white/70 backdrop-blur-md transition-all duration-300 overflow-hidden">
           {!sidebarCollapsed ? (
             <>
-              <div className="h-full overflow-y-auto">
+              <div className="h-full w-full">
                 <Sidebar />
               </div>
               <button
                 onClick={() => setSidebarCollapsed(true)}
-                className="absolute top-4 right-2 p-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg transition-all"
+                className="absolute top-4 right-2 p-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg transition-all z-50"
                 title="Collapse sidebar"
               >
                 <PanelLeftClose size={16} />
@@ -113,7 +113,7 @@ function App() {
           ) : (
             <button
               onClick={() => setSidebarCollapsed(false)}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg transition-all"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 rounded-lg transition-all"
               title="Expand sidebar"
             >
               <ChevronRight size={20} />

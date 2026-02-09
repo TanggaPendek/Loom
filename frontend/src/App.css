@@ -1,25 +1,25 @@
 /* 1. THE INNER CONTENT (Default State) */
-.react-flow__node-dynamicNode > div {
+.react-flow__node-dynamicNode>div {
   /* This transition handles the "Oomph" when SELECTION happens */
   /* We use the spring curve here */
-  transition: 
-    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), 
-    box-shadow 0.3s ease, 
+  transition:
+    transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
     border-color 0.3s ease;
-  
+
   will-change: transform;
 }
 
 /* 2. WHILE DRAGGING (Kill the lag) */
-.react-flow__node.dragging > div {
+.react-flow__node.dragging>div {
   /* CRITICAL: Set transition to 0s so the node stays locked to your mouse.
      This removes the 'lag' feel. */
-  transition: transform 0s !important; 
+  transition: transform 0s !important;
   cursor: grabbing;
 }
 
 /* 3. THE SELECTION "OOMPH" */
-.react-flow__node-dynamicNode.selected > div {
+.react-flow__node-dynamicNode.selected>div {
   /* When you click, the 0.4s spring transition above kicks in */
   transform: scale(1.1) rotate(-1.5deg);
   border-color: #fb7185 !important;
@@ -34,5 +34,33 @@
 }
 
 .react-flow__edge.dragging .cotton-halo {
-  display: none; /* Hide the heavy blur while moving */
+  display: none;
+  /* Hide the heavy blur while moving */
+}
+
+/* 5. NEAT SCROLLBARS */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #10b98133;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #10b98166;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
