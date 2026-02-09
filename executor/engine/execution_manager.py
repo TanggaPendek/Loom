@@ -11,6 +11,10 @@ class ExecutionManager:
         self.nodes: Dict[str, dict] = {}
         self.connections = connections
         self.signal_hub = signal_hub
+        
+        # Optional log manager passed from main_engine
+        self.log_manager = None
+        self.project_id = None
 
         # Runtime state
         self.functions: Dict[str, Any] = {}
@@ -61,7 +65,22 @@ class ExecutionManager:
         # Default to string
         return value
 
-    async def initialize_async(self, nodes: list, nodebank_path=None, project_path=None):
+    async def initialize_async(self, nodes: list, nodebank_path=None, project_path=None,
+                              log_manager=None, project_id=None):
+        """
+        Async initialization with optional logging support.
+        
+        Args:
+            nodes: List of node dictionaries
+            nodebank_path: Path to nodebank directory
+            project_path: Path to project directory
+            log_manager: Optional LogManager for per-node logging
+            project_id: Optional project ID for logging
+        """
+        # Store log manager and project_id for use in run_async
+        self.log_manager = log_manager
+        self.project_id = project_id
+        
         # Load all node functions
         loader = NodeLoader(nodebank_path=nodebank_path, signal_hub=self.signal_hub)
         self.functions = await loader.preload_nodes_async(nodes)

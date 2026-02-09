@@ -2,13 +2,12 @@
 Loom Log Manager
 
 Manages execution logs for displaying in the frontend UI.
-These are "selected logs" - intentional log_print() calls from node scripts,
-not full execution logs or debug output.
+Logs are stored per-project in logs.json files.
 """
 
 import json
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional
 
 
@@ -16,7 +15,7 @@ class LogManager:
     """
     Manages execution logs for frontend display.
     
-    Logs are stored per-project and cleared on each execution start.
+    Logs are stored per-project in {project}/logs.json and cleared on each execution start.
     """
     
     def __init__(self, project_base_path: Path):
@@ -26,95 +25,115 @@ class LogManager:
         Args:
             project_base_path: Base path for userdata (where projects are stored)
         """
-        self.project_base_path = project_base_path
-        self.current_log_file: Optional[Path] = None
+        self.project_base_path = Path(project_base_path)
+        self.state_file = self.project_base_path / "state.json"
     
-    def set_active_project(self, project_name: str) -> None:
+    def _get_project_name(self, project_id: str) -> Optional[str]:
         """
-        Set the active project for logging.
+        Get project name from state.json.
         
         Args:
-            project_name: Name of the project folder
+            project_id: Project ID
+            
+        Returns:
+            Project name or None if not found
         """
-        project_dir = self.project_base_path / project_name
-        if not project_dir.exists():
-            project_dir.mkdir(parents=True, exist_ok=True)
+        if not self.state_file.exists():
+            return None
         
-        self.current_log_file = project_dir / "execution_logs.json"
+        try:
+            with open(self.state_file, "r", encoding="utf-8") as f:
+                state = json.load(f)
+                # Check if this is the active project
+                if state.get("projectId") == project_id:
+                    return state.get("projectName")
+        except:
+            pass
+        
+        return None
     
-    def clear_logs(self) -> None:
-        """Clear all logs for the current project (called at execution start)."""
-        if self.current_log_file and self.current_log_file.exists():
-            self.current_log_file.write_text("[]", encoding="utf-8")
+    def _get_log_file(self, project_id: str) -> Optional[Path]:
+        """Get path to log file for a project."""
+        project_name = self._get_project_name(project_id)
+        if project_name:
+            project_folder = self.project_base_path / project_name
+            if project_folder.exists():
+                return project_folder / "logs.json"
+        return None
     
-    def add_log(self, node_id: str, message: str, level: str = "info") -> None:
+    def clear_logs(self, project_id: str) -> None:
         """
-        Add a log entry.
+        Clear all logs for the specified project.
         
         Args:
-            node_id: ID of the node that generated the log
+            project_id: Project ID
+        """
+        log_file = self._get_log_file(project_id)
+        if log_file:
+            try:
+                log_file.write_text("[]", encoding="utf-8")
+                print(f"[LogManager] Cleared logs: {log_file}")
+            except Exception as e:
+                print(f"[LogManager ERROR] Failed to clear logs: {e}")
+        else:
+            print(f"[LogManager WARNING] Could not find log file for project {project_id}")
+    
+    def append_log(self, project_id: str, message: str, level: str = "info") -> None:
+        """
+        Append a log entry for the specified project.
+        
+        Args:
+            project_id: Project ID
             message: Log message
             level: Log level (info, warning, error)
         """
-        if not self.current_log_file:
-            print("Warning: No active project set for logging")
+        log_file = self._get_log_file(project_id)
+        if not log_file:
+            print(f"[LogManager WARNING] Could not find log file for project {project_id}")
             return
         
         # Load existing logs
-        logs = self._load_logs()
+        logs = []
+        if log_file.exists():
+            try:
+                with open(log_file, "r", encoding="utf-8") as f:
+                    logs = json.load(f)
+            except:
+                logs = []
         
-        # Add new log
+        # Add new log entry
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "nodeId": node_id,
-            "message": message,
+            "time": datetime.now(timezone.utc).isoformat(),
+            "msg": message,
             "level": level
         }
         
         logs.append(log_entry)
         
-        # Save
-        self._save_logs(logs)
+        # Save logs
+        try:
+            with open(log_file, "w", encoding="utf-8") as f:
+                json.dump(logs, f, indent=2)
+        except Exception as e:
+            print(f"[LogManager ERROR] Failed to save logs: {e}")
     
-    def get_logs(self, since_timestamp: Optional[str] = None) -> List[Dict]:
+    def get_logs(self, project_id: str) -> List[Dict]:
         """
-        Get logs, optionally filtered by timestamp.
+        Get all logs for the specified project.
         
         Args:
-            since_timestamp: ISO timestamp to get logs after (optional)
+            project_id: Project ID
             
         Returns:
             List of log entries
         """
-        logs = self._load_logs()
-        
-        if since_timestamp:
-            logs = [
-                log for log in logs
-                if log["timestamp"] > since_timestamp
-            ]
-        
-        return logs
-    
-    def _load_logs(self) -> List[Dict]:
-        """Load logs from file."""
-        if not self.current_log_file or not self.current_log_file.exists():
+        log_file = self._get_log_file(project_id)
+        if not log_file or not log_file.exists():
             return []
         
         try:
-            with open(self.current_log_file, "r", encoding="utf-8") as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading logs: {e}")
+            print(f"[LogManager ERROR] Failed to load logs: {e}")
             return []
-    
-    def _save_logs(self, logs: List[Dict]) -> None:
-        """Save logs to file."""
-        if not self.current_log_file:
-            return
-        
-        try:
-            with open(self.current_log_file, "w", encoding="utf-8") as f:
-                json.dump(logs, f, indent=2)
-        except Exception as e:
-            print(f"Error saving logs: {e}")

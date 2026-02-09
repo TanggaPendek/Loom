@@ -46,10 +46,10 @@ export const moveGraphNode = (nodeId, x, y) =>
   request("graph_node_edit", { nodeId, updates: { position: { x, y } } });
 
 export const updateGraphNodeInput = (nodeId, inputIndex, value) =>
-  request("graph_node_update_input", { 
-    nodeId, 
-    inputIndex, 
-    value 
+  request("graph_node_update_input", {
+    nodeId,
+    inputIndex,
+    value
   });
 
 
@@ -75,3 +75,15 @@ export const deleteConnection = (sourceNodeId, sourcePort, targetNodeId, targetP
 
 // Legacy alias for backward compatibility (do not break old imports)
 export const updateNodeData = (nodeId, updates) => editGraphNode(nodeId, updates);
+
+/* ---------- ENGINE STATE & LOGS ---------- */
+export const getEngineState = () => request("engine_get_state");
+export const getEngineLogs = (projectId) => request("engine_get_logs", { project_id: projectId });
+
+/* ---------- CUSTOM NODES ---------- */
+export const listCustomNodes = () => request("custom_node_list");
+export const getCustomNode = (name) => request("custom_node_get", { name });
+export const createCustomNode = (name, code, metadata) => request("custom_node_create", { name, code, metadata });
+export const updateCustomNode = (name, code) => request("custom_node_update", { name, code });
+export const deleteCustomNode = (name) => request("custom_node_delete", { name });
+export const validateCustomNode = (code) => request("custom_node_validate", { code });

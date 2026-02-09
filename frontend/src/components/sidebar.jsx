@@ -64,16 +64,27 @@ const nodeDefinitions = [
 
 export default function Sidebar() {
   return (
-    <div className="w-full p-2 h-full border-r border-gray-300 bg-gray-50 rounded-lg shadow-sm">
-      <div className="font-bold text-gray-700 mb-2 text-sm">Node Library</div>
-      {nodeDefinitions.map((node) => (
-        <NodeItem
-          key={node.label}
-          label={node.label}
-          type={node.type}
-          nodeData={node.data} // pass the full data with dynamic info
-        />
-      ))}
+    <div className="w-full h-full flex flex-col bg-emerald-50/30 border-r-2 border-emerald-100/50 rounded-[22px] overflow-hidden">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 p-4 border-b-2 border-emerald-100/50">
+        <h3 className="font-black text-sm uppercase tracking-tight text-emerald-900">
+          Node Library
+        </h3>
+      </div>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto p-3">
+        <div className="space-y-2">
+          {nodeDefinitions.map((node) => (
+            <NodeItem
+              key={node.label}
+              label={node.label}
+              type={node.type}
+              nodeData={node.data} // pass the full data with dynamic info
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -22,9 +22,12 @@ class StorageManager:
             StorageManager.save_settings(defaults)
 
         if not StorageManager.STATE_PATH.exists():
+            # state.json IS the active project data (no nesting)
+            # Initialize with empty/null project
             initial_state = {
-                "active_project": None,
-                "history": [] # FIFO Tracker: [oldest, ..., newest]
+                "projectId": None,
+                "projectName": None,
+                "projectPath": None
             }
             StorageManager.save_state(initial_state)
 

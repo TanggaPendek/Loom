@@ -109,15 +109,43 @@ def get_next_node_id(nodes: list) -> tuple[str, str]:
 # Engine Control Handlers
 # ============================================================================
 
-def launch_engine(payload: Dict) -> None:
+def launch_engine(payload: Dict) -> Dict:
     """Launch the executor engine as a subprocess."""
     print("[BACKEND] Launching executor engine via signal...")
     engine_path = ROOT_DIR / "executor" / "engine" / "main_engine.py"
     
     try:
-        subprocess.Popen([sys.executable, str(engine_path)])
+        # Import here to avoid circular dependencies
+        from .modules.engine_state_manager import EngineStateManager
+        engine_state_mgr = EngineStateManager()
+        
+        # Get current project from state
+        state = load_json_file(STATE_PATH)
+        project_id = state.get("projectId") if state else None
+        
+        # Set engine state to initializing
+        engine_state_mgr.set_engine_state("initializing", project_id=project_id)
+        
+        # Launch subprocess
+        process = subprocess.Popen([sys.executable, str(engine_path)])
+        
+        # Update state with process ID and running status
+        engine_state_mgr.set_engine_state("running", project_id=project_id, process_id=process.pid)
+        
+        return {"status": "ok", "message": "Engine started", "process_id": process.pid}
     except Exception as e:
         print(f"[BACKEND ERROR] Failed to launch engine: {e}")
+        # Set error state
+        try:
+            engine_state_mgr = EngineStateManager()
+            engine_state_mgr.set_engine_state(
+                "error", 
+                project_id=project_id if 'project_id' in locals() else None,
+                error={"message": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
+            )
+        except:
+            pass
+        return {"status": "error", "message": str(e)}
 
 
 def handle_engine_output(payload: Dict) -> None:
@@ -164,6 +192,63 @@ def get_startup_payload() -> Dict:
         result[key] = load_json_file(path)
     
     return result
+
+
+def handle_engine_state_request(payload: Dict) -> Dict:
+    """
+    Get current engine state for frontend.
+    
+    Returns simplified frontend state (idle/running) plus any error info.
+    """
+    from .modules.engine_state_manager import EngineStateManager
+    
+    engine_state_mgr = EngineStateManager()
+    backend_state = engine_state_mgr.get_engine_state()
+    frontend_state = engine_state_mgr.get_frontend_state()
+    
+    return {
+        "status": "ok",
+        "state": frontend_state,  # 'idle' or 'running'
+        "error": backend_state.get("error"),
+        "timestamp": backend_state.get("timestamp")
+    }
+
+
+def handle_engine_logs_request(payload: Dict) -> Dict:
+    """
+    Get logs for specified project.
+    
+    Args:
+        payload: Must contain 'project_id' or uses current project from state
+    
+    Returns:
+        Log array from project's logs.json file
+    """
+    project_id = payload.get("project_id")
+    
+    # If no project_id provided, try to get from current state
+    if not project_id:
+        state = load_json_file(STATE_PATH)
+        project_id = state.get("projectId") if state else None
+    
+    if not project_id:
+        return {"status": "error", "message": "No project specified"}
+    
+    # Find project path from state or index
+    state = load_json_file(STATE_PATH)
+    if state and state.get("projectId") == project_id:
+        project_path_str = state.get("projectPath")
+        if project_path_str:
+            project_folder = Path(project_path_str).parent
+            log_file = project_folder / "logs.json"
+            
+            if log_file.exists():
+                logs = load_json_file(log_file, default=[])
+                return {"status": "ok", "logs": logs}
+            else:
+                return {"status": "ok", "logs": []}  # No logs yet
+    
+    return {"status": "error", "message": "Project not found"}
 
 
 # ============================================================================

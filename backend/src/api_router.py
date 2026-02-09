@@ -31,6 +31,10 @@ def create_dispatcher(signal_hub, project_backend, log_manager=None):
         "run": "engine_run_request",
         "stop": "engine_stop_request",
         "force_stop": "engine_kill_request",
+        
+        # Engine State & Logs
+        "engine_get_state": "engine_state_request",
+        "engine_get_logs": "engine_logs_request",
     }
 
     SYNC_MAP = {

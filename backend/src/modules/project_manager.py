@@ -10,16 +10,15 @@ class ProjectManager:
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.signal_hub = signal_hub
         StorageManager.init_storage()
-        self.signal_hub.on("project_create_request", lambda p: self.init_project(
-        project_name=p.get("projectName"),
-        description=p.get("description"),
-        author=p.get("author", "author")
-        ))
 
         if self.signal_hub:
             # Standard Request Handlers
             self.signal_hub.on("current_request", lambda _: self.signal_hub.emit("current_response", self.read_current()))
-            self.signal_hub.on("project_create_request", lambda p: self.init_project(**p))
+            self.signal_hub.on("project_create_request", lambda p: self.init_project(
+                project_name=p.get("projectName"),
+                description=p.get("description"),
+                author=p.get("author", "author")
+            ))
             self.signal_hub.on("project_update_request", lambda p: self.update_project(**p))
             self.signal_hub.on("project_delete_request", lambda p: self.delete_project(p.get("projectName")))
             self.signal_hub.on("project_change_request", lambda p: self.change_project(p.get("projectId")))
@@ -27,19 +26,25 @@ class ProjectManager:
     # ===== State Management =====
 
     def write_current(self, project_obj):
-        """Updates state.json and notifies the system of the active project."""
-        if not project_obj: return
-        state = StorageManager.get_state()
-        state["active_project"] = project_obj
-        StorageManager.save_state(state)
+        """Updates state.json with the active project data.
+        
+        Note: state.json IS the active project - no nested 'active_project' field.
+        """
+        if not project_obj:
+            return
+        
+        # state.json directly contains the project data
+        StorageManager.save_state(project_obj)
         
         if self.signal_hub:
             self.signal_hub.emit("current_updated", project_obj)
 
     def read_current(self):
-        """Retrieves the active project from state.json."""
-        state = StorageManager.get_state()
-        return state.get("active_project")
+        """Retrieves the active project from state.json.
+        
+        Returns the entire state.json content which IS the active project.
+        """
+        return StorageManager.get_state()
 
     # ===== Project Operations =====
 
@@ -74,9 +79,24 @@ class ProjectManager:
             with open(savefile_path, "w", encoding="utf-8-sig") as f:
                 json.dump(project_data, f, indent=4)
 
-            # 3. 🔑 REUSE CHANGE_PROJECT 
-            # This handles write_current(full_data) and signal emitting for you.
-            # Make sure your projectindex.json is updated or change_project can find it!
+            # 3. 🔑 UPDATE FOLDER INDEX FIRST (so change_project can find it)
+            index_path = self.base_path / "folderindex.json"
+            index = []
+            if index_path.exists():
+                with open(index_path, "r", encoding="utf-8") as f:
+                    index = json.load(f)
+            
+            # Add new project to index
+            index.append({
+                "projectId": project_id,
+                "projectName": project_name,
+                "projectPath": str(savefile_path)
+            })
+            
+            with open(index_path, "w", encoding="utf-8") as f:
+                json.dump(index, f, indent=4)
+
+            # 4. Now call change_project (it can find the project in index)
             full_loaded_data = self.change_project(project_id)
 
             if self.signal_hub:
@@ -167,16 +187,20 @@ class ProjectManager:
         if project_path.exists():
             shutil.rmtree(project_path)
             
+            # Check if deleted project was active, if so clear state
             current = self.read_current()
             if current and current.get("projectName") == project_name:
-                state = StorageManager.get_state()
-                state["active_project"] = None
-                StorageManager.save_state(state)
+                # Clear state.json (set to empty project)
+                empty_state = {
+                    "projectId": None,
+                    "projectName": None,
+                    "projectPath": None
+                }
+                StorageManager.save_state(empty_state)
             
             if self.signal_hub:
                 self.signal_hub.emit("project_index_update_required")
             
-            # 🔑 ADD THIS RETURN:
             return {"status": "ok", "message": f"Project {project_name} deleted"}
         
         return {"status": "error", "message": "Project folder not found"}

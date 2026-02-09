@@ -9,7 +9,6 @@ import {
   Trash2,
 } from "lucide-react";
 import LogsPanel from "./LogsPanel";
-import { get } from "../../api/client";
 import {
   runEngine,
   stopEngine,
@@ -22,43 +21,7 @@ import {
 const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
   const [engineState, setEngineState] = useState("idle"); // 'idle' or 'running'
   const [localInputs, setLocalInputs] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const [lastLogTimestamp, setLastLogTimestamp] = useState(null);
 
-  // Poll logs only when engine is running
-  useEffect(() => {
-    if (engineState !== "running") return;
-
-    const pollLogs = async () => {
-      try {
-        const url = lastLogTimestamp
-          ? `/sync/logs?since=${lastLogTimestamp}`
-          : "/sync/logs";
-
-        const response = await get(url);
-
-        if (response?.logs && response.logs.length > 0) {
-          setLogs((prev) => [...prev, ...response.logs]);
-          // Update timestamp to the latest log
-          const latest = response.logs[response.logs.length - 1];
-          setLastLogTimestamp(latest.timestamp);
-        }
-      } catch (error) {
-        console.error("Failed to fetch logs:", error);
-      }
-    };
-
-    const interval = setInterval(pollLogs, 2000);
-    return () => clearInterval(interval);
-  }, [engineState, lastLogTimestamp]);
-
-  // Clear logs when engine starts
-  useEffect(() => {
-    if (engineState === "running") {
-      setLogs([]);
-      setLastLogTimestamp(null);
-    }
-  }, [engineState]);
 
   // Update local inputs when selection changes
   useEffect(() => {
@@ -237,11 +200,10 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
 
                   <input
                     type="text"
-                    className={`w-full px-3 py-2 border-none rounded-xl text-xs font-mono outline-none transition-all ${
-                      connected
-                        ? "bg-emerald-50/30 text-emerald-400 cursor-not-allowed"
-                        : "bg-emerald-50/50 text-emerald-700"
-                    }`}
+                    className={`w-full px-3 py-2 border-none rounded-xl text-xs font-mono outline-none transition-all ${connected
+                      ? "bg-emerald-50/30 text-emerald-400 cursor-not-allowed"
+                      : "bg-emerald-50/50 text-emerald-700"
+                      }`}
                     value={inp.value || ""}
                     onChange={(e) => handleTyping(idx, e.target.value)}
                     onBlur={(e) => {
@@ -284,7 +246,7 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
             </div>
           </div>
         ) : (
-          <LogsPanel logs={logs} isPolling={engineState === "running"} />
+          <LogsPanel isPolling={engineState === "running"} />
         )}
       </div>
 
