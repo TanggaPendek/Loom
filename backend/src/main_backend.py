@@ -47,6 +47,9 @@ signal_hub.on("connection_create_request", connection_create)
 signal_hub.on("connection_delete_request", connection_delete)
 signal_hub.on("graph_node_update_input_request", graph_node_update_input)
 signal_hub.on("graph_node_move_request", graph_node_move)
+signal_hub.on("project_delete_request", lambda p: project_backend.delete_project(
+    p.get("projectId", {}).get("projectName")
+))
 
 # 3. Register Signal Listeners
 events = [

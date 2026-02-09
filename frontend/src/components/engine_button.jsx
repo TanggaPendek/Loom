@@ -8,7 +8,7 @@ const EngineButton = () => {
 
   const handleToggle = async () => {
     setIsPending(true); // Disable button while the request is in flight
-    
+
     try {
       if (status === 'idle') {
         // Send 'run' command to Python

@@ -8,7 +8,13 @@ import EngineButton from "./components/engine_button.jsx";
 import { initProject } from "./api/commands.jsx";
 import ProjectModal from "./modal/projectList.jsx";
 import { ReactFlowProvider } from "reactflow";
-import { Loader2, ChevronLeft, ChevronRight, PanelLeftClose, PanelRightClose } from "lucide-react";
+import {
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  PanelLeftClose,
+  PanelRightClose,
+} from "lucide-react";
 
 function App() {
   const [activeProject, setActiveProject] = useState(null);
@@ -40,13 +46,21 @@ function App() {
     }
   };
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    // Re-open after a tiny tick to force a full remount/refresh
+    setTimeout(() => {
+      setIsModalOpen(true);
+    }, 10);
+  };
+
   const handleSelect = (element) => {
     console.log("Selected:", element);
     setSelectedElement(element);
   };
 
   // Calculate grid template columns based on collapse state
-  const gridColumns = `${sidebarCollapsed ? '40px' : '260px'} 1fr ${propertiesCollapsed ? '40px' : '300px'}`;
+  const gridColumns = `${sidebarCollapsed ? "40px" : "260px"} 1fr ${propertiesCollapsed ? "40px" : "300px"}`;
 
   return (
     <div className="h-screen w-screen flex flex-col bg-[#F8FAF9] relative overflow-hidden">
@@ -69,6 +83,7 @@ function App() {
       {isModalOpen && (
         <ProjectModal
           onClose={() => setIsModalOpen(false)}
+          onDeleteRefresh={handleModalClose}
           onSelectProject={handleProjectSelected}
           refreshCanvas={refreshCanvas}
         />

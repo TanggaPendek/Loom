@@ -4,6 +4,7 @@ from typing import Dict, Any, Tuple, Optional
 
 from executor.engine.engine_signal import EngineSignalHub
 from executor.engine.node_loader import NodeLoader
+from executor.utils.node_logger import init_logger
 
 class ExecutionManager:
     def __init__(self, nodes, connections, signal_hub: Optional[EngineSignalHub] = None):
@@ -94,21 +95,30 @@ class ExecutionManager:
                 self.ready_queue.append(node_id)
 
     async def run_async(self):
+        # Keep track of counts locally so we don't mutate the original structure
+        remaining_inbound = self.incoming_count.copy()
+
         while self.ready_queue:
             node_id = self.ready_queue.popleft()
             func = self.functions.get(node_id)
+            
             if not func:
                 print(f"[ExecutionManager] Node {node_id} skipped: function not loaded")
                 continue
 
-            # Gather inputs
+            # 1. Initialize Logger for this specific node context
+            # This allows log_print() inside the node to write to the correct project folder
+            from executor.utils.node_logger import init_logger
+            init_logger(node_id=node_id)
+
+            # 2. Gather inputs
             inputs = []
             i = 0
             while (node_id, i) in self.input_buckets:
                 inputs.append(self.input_buckets[(node_id, i)])
                 i += 1
 
-            # Execute node
+            # 3. Execute node
             try:
                 result = func(*inputs)
                 if asyncio.iscoroutine(result):
@@ -116,21 +126,27 @@ class ExecutionManager:
             except Exception as e:
                 print(f"[ExecutionManager] Node {node_id} failed: {e}")
                 import traceback
-                traceback.print_exc()  # More detailed error info
+                traceback.print_exc()
                 continue
 
-            # Normalize outputs
+            # 4. Normalize outputs
             if not isinstance(result, (list, tuple)):
                 result = [result]
 
-            # Route outputs
+            # 5. Route outputs and manage the queue
             for src_port, tgt_id, tgt_port in self.outgoing.get(node_id, []):
                 if src_port >= len(result):
                     continue
+                
+                # Pass the data to the target port
                 value = result[src_port]
                 self.input_buckets[(tgt_id, tgt_port)] = value
-                self.ready_queue.append(tgt_id)
+                
+                # 🔑 FIX: Only queue target node if ALL its inputs are ready
+                remaining_inbound[tgt_id] -= 1
+                if remaining_inbound[tgt_id] <= 0:
+                    self.ready_queue.append(tgt_id)
 
-            # Emit signal if hub exists
+            # 6. Signal completion
             if self.signal_hub:
                 self.signal_hub.emit("node_executed", {"nodeId": node_id, "output": result})

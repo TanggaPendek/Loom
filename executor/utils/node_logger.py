@@ -1,113 +1,77 @@
-"""
-Loom Node Logger Utility
-
-This module provides simple logging functions for node scripts.
-Use log_print() in your node scripts to send user-facing messages
-to the frontend log panel.
-
-Example usage in a node script:
-    from executor.utils.node_logger import log_print
-    
-    def my_node(param1, param2):
-        log_print(f"Processing {param1} and {param2}")
-        result = param1 + param2
-        log_print(f"Result: {result}")
-        return result
-"""
-
 import json
 from pathlib import Path
 from datetime import datetime
 import os
 
-
-# Global log file path (set by executor at runtime)
+# Global log file path
 _LOG_FILE_PATH = None
 _CURRENT_NODE_ID = None
 
-
-def init_logger(log_file_path: str, node_id: str) -> None:
+def get_project_log_path():
     """
-    Initialize the logger for the current execution.
+    Finds the project directory from state.json and returns a path for logs.json
+    """
+    # Adjust this path to where your state.json actually lives relative to this script
+    # Based on your previous snippet:
+    state_path = Path(__file__).parent.parent.parent / "userdata" / "state.json"
     
-    This is called by the executor, not by node scripts.
+    if state_path.exists():
+        try:
+            with open(state_path, "r", encoding="utf-8-sig") as f:
+                state = json.load(f)
+                # Get the folder containing the savefile.json
+                project_dir = Path(state["projectPath"]).parent
+                return project_dir / "logs.json"
+        except Exception as e:
+            print(f"[Logger] Error reading state.json: {e}")
     
-    Args:
-        log_file_path: Path to the log file
-        node_id: ID of the currently executing node
+    # Fallback to current working directory if state.json is missing
+    return Path.cwd() / "logs.json"
+
+def init_logger(node_id: str, log_file_path: str = None) -> None:
+    """
+    Initialize the logger. If no path is provided, it finds the project path.
     """
     global _LOG_FILE_PATH, _CURRENT_NODE_ID
-    _LOG_FILE_PATH = Path(log_file_path)
     _CURRENT_NODE_ID = node_id
     
-    # Create log file if it doesn't exist
+    if log_file_path:
+        _LOG_FILE_PATH = Path(log_file_path)
+    else:
+        _LOG_FILE_PATH = get_project_log_path()
+    
+    # Create log file and parent directories if they don't exist
     if not _LOG_FILE_PATH.exists():
         _LOG_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _LOG_FILE_PATH.write_text("[]", encoding="utf-8")
-
+        with open(_LOG_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump([], f)
+    
+    print(f"[Logger] Initialized. Logging to: {_LOG_FILE_PATH}")
 
 def log_print(message: str, level: str = "info") -> None:
-    """
-    Log a message that will be displayed in the frontend.
-    
-    This is the main function that node scripts should use.
-    
-    Args:
-        message: Message to log
-        level: Log level (info, warning, error). Default is 'info'
-        
-    Examples:
-        log_print("Starting calculation")
-        log_print("Invalid input detected", level="warning")
-        log_print("Operation failed", level="error")
-    """
+    # ... (Rest of your log_print logic stays the same)
     if not _LOG_FILE_PATH or not _CURRENT_NODE_ID:
-        # Fallback to console if logger not initialized
         print(f"[{level.upper()}] {message}")
         return
-    
+
     try:
-        # Load existing logs
-        logs = []
-        if _LOG_FILE_PATH.exists():
-            with open(_LOG_FILE_PATH, "r", encoding="utf-8") as f:
+        # Load, append, and save
+        with open(_LOG_FILE_PATH, "r+", encoding="utf-8") as f:
+            try:
                 logs = json.load(f)
-        
-        # Add new log entry
-        log_entry = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "nodeId": _CURRENT_NODE_ID,
-            "message": str(message),
-            "level": level
-        }
-        
-        logs.append(log_entry)
-        
-        # Save logs
-        with open(_LOG_FILE_PATH, "w", encoding="utf-8") as f:
-            json.dump(logs, f, indent=2)
+            except json.JSONDecodeError:
+                logs = []
             
+            log_entry = {
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "nodeId": _CURRENT_NODE_ID,
+                "message": str(message),
+                "level": level
+            }
+            logs.append(log_entry)
+            
+            f.seek(0)
+            json.dump(logs, f, indent=2)
+            f.truncate()
     except Exception as e:
-        # Fallback to console on error
-        print(f"[LOG ERROR] Failed to write log: {e}")
-        print(f"[{level.upper()}] {message}")
-
-
-def log_warning(message: str) -> None:
-    """
-    Log a warning message.
-    
-    Args:
-        message: Warning message
-    """
-    log_print(message, level="warning")
-
-
-def log_error(message: str) -> None:
-    """
-    Log an error message.
-    
-    Args:
-        message: Error message
-    """
-    log_print(message, level="error")
+        print(f"[LOG ERROR] {e}")

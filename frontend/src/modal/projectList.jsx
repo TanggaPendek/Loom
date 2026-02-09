@@ -7,7 +7,7 @@ import {
 } from "../api/commands";
 import { Trash2, Plus, Sprout, X, Loader2, Sparkles } from "lucide-react";
 
-const ProjectModal = ({ onSelectProject, onClose, refreshCanvas }) => {
+const ProjectModal = ({ onSelectProject, onClose, onDeleteRefresh, refreshCanvas }) => {
 
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +30,46 @@ const ProjectModal = ({ onSelectProject, onClose, refreshCanvas }) => {
     refreshProjects();
   }, []);
 
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!newProjectName.trim()) return;
-    await createProject({ projectName: newProjectName });
-    setNewProjectName("");
-    refreshProjects();
+
+const handleCreate = async (e) => {
+  e.preventDefault();
+  if (!newProjectName.trim()) return;
+  
+  try {
+    const response = await createProject({ projectName: newProjectName });
+    
+    // Backend returns {status: "ok"}, check for that
+    if (response && (response.status === "success" || response.status === "ok")) {
+      setNewProjectName("");
+      
+      // Extract project data (nested in result if using dispatcher)
+      const projectData = response.project || response.result?.project;
+      
+      if (onSelectProject && projectData) {
+        await onSelectProject(projectData); // This updates the canvas
+      }
+      
+      if (onClose) onClose(); // Closes the modal
+    }
+  } catch (err) {
+    console.error("Failed to create project", err);
+  }
+};
+
+const handleDelete = async (e, proj) => {
+    e.stopPropagation(); 
+    
+    if (window.confirm(`Delete "${proj.projectName}"?`)) {
+      try {
+        await deleteProject({ projectName: proj.projectName });
+
+        if (onDeleteRefresh) {
+          onDeleteRefresh(); 
+        }
+      } catch (err) {
+        console.error("Delete failed", err);
+      }
+    }
   };
 
 const handleProjectClick = async (proj) => {
@@ -117,11 +151,7 @@ const handleProjectClick = async (proj) => {
                 </div>
 
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm("Delete?"))
-                      deleteProject(proj.projectId).then(refreshProjects);
-                  }}
+                  onClick={(e) => handleDelete(e, proj)}
                   className="p-2 text-slate-200 hover:text-red-400 hover:bg-red-50 rounded-xl transition-all"
                 >
                   <Trash2 className="w-4 h-4" />

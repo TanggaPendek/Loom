@@ -19,15 +19,15 @@ const Navbar = ({ onOpenProjectManager }) => {
         <span className="text-xl font-bold tracking-tighter text-emerald-700 uppercase">
           Loom
         </span>
-        
+
         <div className="flex gap-2">
           {NAVBAR_MENU.map((menu) => (
             <div key={menu.id} className="relative">
               <button
                 onClick={() => setActiveMenu(activeMenu === menu.id ? null : menu.id)}
                 className={`px-4 py-2 rounded-2xl font-semibold transition-all active:scale-95
-                  ${activeMenu === menu.id 
-                    ? "bg-emerald-100 text-emerald-900" 
+                  ${activeMenu === menu.id
+                    ? "bg-emerald-100 text-emerald-900"
                     : "text-emerald-900/60 hover:bg-emerald-50/80 hover:text-emerald-900"}
                 `}
               >
@@ -44,8 +44,8 @@ const Navbar = ({ onOpenProjectManager }) => {
                         key={item.id}
                         onClick={() => handleAction(item.id)}
                         className={`w-full text-left px-4 py-3 rounded-xl transition-all flex justify-between items-center group active:scale-95
-                          ${item.variant === "danger" 
-                            ? "hover:bg-rose-50 text-rose-600" 
+                          ${item.variant === "danger"
+                            ? "hover:bg-rose-50 text-rose-600"
                             : "hover:bg-emerald-600 hover:text-white text-emerald-900"}
                         `}
                       >

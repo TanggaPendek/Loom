@@ -10,6 +10,11 @@ class ProjectManager:
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.signal_hub = signal_hub
         StorageManager.init_storage()
+        self.signal_hub.on("project_create_request", lambda p: self.init_project(
+        project_name=p.get("projectName"),
+        description=p.get("description"),
+        author=p.get("author", "author")
+        ))
 
         if self.signal_hub:
             # Standard Request Handlers
@@ -39,45 +44,48 @@ class ProjectManager:
     # ===== Project Operations =====
 
     def init_project(self, project_name=None, description=None, author="author"):
-        """Creates a new project folder and savefile."""
         folder_count = len([d for d in self.base_path.iterdir() if d.is_dir()]) + 1
         project_name = project_name or f"Project_{folder_count}"
         
-        # Conflict resolution for folder names
         project_path = self.base_path / project_name
-        suffix = 1
-        base_name = project_name
-        while project_path.exists():
-            project_name = f"{base_name}_{suffix}"
-            project_path = self.base_path / project_name
-            suffix += 1
+        # ... (Keep your existing conflict resolution logic here) ...
 
-        project_path.mkdir(parents=True, exist_ok=True)
-        savefile_path = project_path / "savefile.json"
+        try:
+            project_path.mkdir(parents=True, exist_ok=True)
+            savefile_path = project_path / "savefile.json"
 
-        project_data = {
-            "projectId": f"proj_{folder_count:03d}_{datetime.datetime.now().strftime('%M%S')}",
-            "projectName": project_name,
-            "projectPath": str(savefile_path),
-            "metadata": {
-                "author": author,
-                "description": description or f"description for {project_name}",
-                "createdAt": datetime.datetime.utcnow().isoformat() + "Z",
-                "lastModified": datetime.datetime.utcnow().isoformat() + "Z"
-            },
-            "nodes": [],
-            "connections": []
-        }
+            # 1. Create the project data structure
+            project_id = f"proj_{folder_count:03d}_{datetime.datetime.now().strftime('%M%S')}"
+            project_data = {
+                "projectId": project_id,
+                "projectName": project_name,
+                "projectPath": str(savefile_path),
+                "metadata": {
+                    "author": author,
+                    "description": description or f"description for {project_name}",
+                    "createdAt": datetime.datetime.utcnow().isoformat() + "Z",
+                    "lastModified": datetime.datetime.utcnow().isoformat() + "Z"
+                },
+                "nodes": [],
+                "connections": []
+            }
 
-        with open(savefile_path, "w", encoding="utf-8-sig") as f:
-            json.dump(project_data, f, indent=4)
+            # 2. Write the savefile.json to the new folder
+            with open(savefile_path, "w", encoding="utf-8-sig") as f:
+                json.dump(project_data, f, indent=4)
 
-        # Update index and set as current
-        self.write_current(project_data)
-        if self.signal_hub:
-            self.signal_hub.emit("project_index_update_required")
-        
-        return project_data
+            # 3. 🔑 REUSE CHANGE_PROJECT 
+            # This handles write_current(full_data) and signal emitting for you.
+            # Make sure your projectindex.json is updated or change_project can find it!
+            full_loaded_data = self.change_project(project_id)
+
+            if self.signal_hub:
+                self.signal_hub.emit("project_index_update_required")
+            
+            return {"status": "ok", "project": full_loaded_data or project_data}
+
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
     def update_project(self, project_name: str, entity_type: str = None, 
                        entity_id: str = None, updates: dict = None, 
@@ -151,7 +159,10 @@ class ProjectManager:
         return None
 
     def delete_project(self, project_name: str):
-        """Deletes project folder and clears active state if necessary."""
+        """Deletes project folder and clears active state."""
+        if not project_name:
+            return {"status": "error", "message": "No project name provided"}
+
         project_path = self.base_path / project_name
         if project_path.exists():
             shutil.rmtree(project_path)
@@ -164,3 +175,8 @@ class ProjectManager:
             
             if self.signal_hub:
                 self.signal_hub.emit("project_index_update_required")
+            
+            # 🔑 ADD THIS RETURN:
+            return {"status": "ok", "message": f"Project {project_name} deleted"}
+        
+        return {"status": "error", "message": "Project folder not found"}
