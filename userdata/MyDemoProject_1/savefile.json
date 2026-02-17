@@ -1,0 +1,96 @@
+{
+  "projectId": "proj_new_loop",
+  "projectName": "Dynamic Loop Project v2",
+  "projectPath": "/userdata/test_loop_v2.json",
+  "metadata": {
+    "author": "TanggaPendek",
+    "description": "Loop 1+1 until 10 using new node index",
+    "createdAt": "2026-01-23T02:00:00Z"
+  },
+  "nodes": [
+    {
+      "nodeId": "node_1",
+      "positionId": "pos_1",
+      "name": "input_node",
+      "position": { "x": 100.0, "y": 200.0 },
+      "input": [
+        { "value": 0 }
+      ],
+      "output": ["out_1"],
+      "ref": "builtin",
+      "metadata": { "type": "source" }
+    },
+    {
+      "nodeId": "node_2",
+      "positionId": "pos_2",
+      "name": "condition_node",
+      "position": { "x": 350.0, "y": 200.0 },
+      "input": [
+        { "var": "out_1" },
+        { "value": 10 }
+      ],
+      "output": ["out_2_false", "out_2_true"],
+      "ref": "builtin",
+      "metadata": { "operation": "condition", "loop": true }
+    },
+    {
+      "nodeId": "node_3",
+      "positionId": "pos_3",
+      "name": "add_node",
+      "position": { "x": 600.0, "y": 200.0 },
+      "input": [
+        { "var": "out_1" },
+        { "value": 1 }
+      ],
+      "output": ["out_1"],
+      "ref": "builtin",
+      "metadata": { "operation": "add" }
+    },
+    {
+      "nodeId": "node_4",
+      "positionId": "pos_4",
+      "name": "print_node",
+      "position": { "x": 850.0, "y": 200.0 },
+      "input": [
+        { "var": "out_1" }
+      ],
+      "output": [],
+      "ref": "builtin",
+      "metadata": { "operation": "print" }
+    }
+  ],
+  "connections": [
+    {
+      "connectionId": "conn_1",
+      "sourceNodeId": "node_1",
+      "sourceOutput": "out_1",
+      "targetNodeId": "node_2",
+      "targetInput": "var_1",
+      "metadata": { "label": "data_flow" }
+    },
+    {
+      "connectionId": "conn_2",
+      "sourceNodeId": "node_2",
+      "sourceOutput": "out_2_true",
+      "targetNodeId": "node_3",
+      "targetInput": "var_1",
+      "metadata": { "label": "true_path" }
+    },
+    {
+      "connectionId": "conn_3",
+      "sourceNodeId": "node_3",
+      "sourceOutput": "out_1",
+      "targetNodeId": "node_2",
+      "targetInput": "var_1",
+      "metadata": { "label": "loop_back" }
+    },
+    {
+      "connectionId": "conn_4",
+      "sourceNodeId": "node_2",
+      "sourceOutput": "out_2_false",
+      "targetNodeId": "node_4",
+      "targetInput": "var_1",
+      "metadata": { "label": "false_path" }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: loom-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/data:/app/data
+      - ./backend/logs:/app/logs
+
+    env_file:
+      - ./backend/.env
+    restart: always
+
+  executor:
+    build: ./executor
+    container_name: loom-executor
+    volumes:
+      - ./executor:/app
+      - ./codebank:/codebank
+      - ./userfolder:/userfolder
+
+  frontend:
+    build: ./frontend
+    container_name: loom-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+

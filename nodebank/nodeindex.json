@@ -1,0 +1,236 @@
+[
+    {
+        "nodeId": "io_input_node",
+        "name": "Io Input",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\io_input_node.py",
+        "entryFunction": "io_input_node",
+        "dynamic": {
+            "inputs": [
+                "Value"
+            ],
+            "outputs": [
+                "Value"
+            ]
+        }
+    },
+    {
+        "nodeId": "io_print_node",
+        "name": "Io Print",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\io_print_node.py",
+        "entryFunction": "io_print_node",
+        "dynamic": {
+            "inputs": [
+                "inputs"
+            ],
+            "outputs": []
+        }
+    },
+    {
+        "nodeId": "logic_equal_node",
+        "name": "Logic Equal",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_equal_node.py",
+        "entryFunction": "logic_equal_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Bool"
+            ]
+        }
+    },
+    {
+        "nodeId": "logic_greater_node",
+        "name": "Logic Greater",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_greater_node.py",
+        "entryFunction": "logic_greater_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Bool"
+            ]
+        }
+    },
+    {
+        "nodeId": "logic_less_node",
+        "name": "Logic Less",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_less_node.py",
+        "entryFunction": "logic_less_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Bool"
+            ]
+        }
+    },
+    {
+        "nodeId": "logic_not_equal_logic_not_equal_node",
+        "name": "Logic Not Equal",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_not_equal.py",
+        "entryFunction": "logic_not_equal_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Bool"
+            ]
+        }
+    },
+    {
+        "nodeId": "math_add_node",
+        "name": "Math Add",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_add_node.py",
+        "entryFunction": "math_add_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Math"
+            ]
+        }
+    },
+    {
+        "nodeId": "math_divide_node",
+        "name": "Math Divide",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_divide_node.py",
+        "entryFunction": "math_divide_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Math"
+            ]
+        }
+    },
+    {
+        "nodeId": "math_multiply_node",
+        "name": "Math Multiply",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_multiply_node.py",
+        "entryFunction": "math_multiply_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Math"
+            ]
+        }
+    },
+    {
+        "nodeId": "math_subtract_node",
+        "name": "Math Subtract",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_subtract_node.py",
+        "entryFunction": "math_subtract_node",
+        "dynamic": {
+            "inputs": [
+                "Inputs1",
+                "Inputs2"
+            ],
+            "outputs": [
+                "Math"
+            ]
+        }
+    },
+    {
+        "nodeId": "random_float_node",
+        "name": "Random Float",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\random_float_node.py",
+        "entryFunction": "random_float_node",
+        "dynamic": {
+            "inputs": [
+                "Min",
+                "Max"
+            ],
+            "outputs": [
+                "Random"
+            ]
+        }
+    },
+    {
+        "nodeId": "random_int_node",
+        "name": "Random Int",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\random_int_node.py",
+        "entryFunction": "random_int_node",
+        "dynamic": {
+            "inputs": [
+                "Min",
+                "Max"
+            ],
+            "outputs": [
+                "Random"
+            ]
+        }
+    },
+    {
+        "nodeId": "string_concat_node",
+        "name": "String Concat",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_concat_node.py",
+        "entryFunction": "string_concat_node",
+        "dynamic": {
+            "inputs": [
+                "Str1",
+                "Str2"
+            ],
+            "outputs": [
+                "String"
+            ]
+        }
+    },
+    {
+        "nodeId": "string_lower_node",
+        "name": "String Lower",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_lower_node.py",
+        "entryFunction": "string_lower_node",
+        "dynamic": {
+            "inputs": [
+                "Value"
+            ],
+            "outputs": [
+                "String"
+            ]
+        }
+    },
+    {
+        "nodeId": "string_upper_node",
+        "name": "String Upper",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_upper_node.py",
+        "entryFunction": "string_upper_node",
+        "dynamic": {
+            "inputs": [
+                "Value"
+            ],
+            "outputs": [
+                "String"
+            ]
+        }
+    }
+]

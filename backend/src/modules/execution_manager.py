@@ -1,0 +1,181 @@
+import subprocess
+import sys
+import threading
+from pathlib import Path
+from typing import Optional
+from .signal_hub import SignalHub
+from backend.src.modules.project_manager import ProjectManager
+
+
+class ExecutionManager:
+    """
+    Backend Execution Coordinator - CLI Worker
+
+    Spawns engine process per request and streams stdout/stderr.
+    Uses current.json to determine the active project automatically.
+    """
+
+    def __init__(self, signal_hub: SignalHub):
+        self.signal_hub = signal_hub
+        self.process: Optional[subprocess.Popen] = None
+        self.running = False
+        self.current_run_id = None
+
+        # Signals
+        signal_hub.on("engine_run_request", self.on_run_request)
+        signal_hub.on("engine_stop_request", self.on_stop_request)
+        signal_hub.on("engine_kill_request", self.on_force_stop_request)  # Match API router
+        signal_hub.on("clean_all_venvs_request", self.on_clean_all_request)
+
+    def on_clean_all_request(self, payload=None):
+        if self.running:
+            self.signal_hub.emit("cleaner_error", {"reason": "cannot_clean_while_engine_running"})
+            return
+
+        from backend.src.modules.cleaner import VenvCleaner
+        try:
+            count = VenvCleaner.clean_all_venvs()
+            self.signal_hub.emit("cleaner_success", {
+                "message": f"Successfully wiped {count} virtual environments.",
+                "count": count
+            })
+        except Exception as e:
+            self.signal_hub.emit("cleaner_error", {"error": str(e)})
+
+    def on_run_request(self, payload=None):
+        if self.running:
+            self.signal_hub.emit("execution_rejected", {"reason": "already_running"})
+            return {"status": "error", "message": "Engine already running"}
+
+        # 1. Get active project
+        project_manager = ProjectManager()
+        current = project_manager.read_current()
+        if not current:
+            self.signal_hub.emit("execution_error", {"error": "No current project selected"})
+            return {"status": "error", "message": "No current project selected"}
+
+        # 2. TRIGGER FIFO CLEANING (Golden Rule)
+        from backend.src.modules.cleaner import VenvCleaner
+        VenvCleaner.run_fifo_clean(current["projectId"], current["projectPath"])
+
+        # 3. Launch Process logic starts here...
+        graph_path = Path(current["projectPath"])
+        if not graph_path.exists():
+            self.signal_hub.emit("execution_error", {"error": f"Graph not found: {graph_path}"})
+            return {"status": "error", "message": f"Graph not found: {graph_path}"}
+
+        self.running = True
+        self.current_run_id = current.get("projectId")
+        self.signal_hub.emit("execution_started", {"projectId": self.current_run_id})
+
+        # Launch engine process (absolute path from project root)
+        project_root = Path(__file__).parent.parent.parent.parent  # go up from backend/src/modules/
+        engine_file = project_root / "executor" / "engine" / "main_engine.py"
+
+        if not engine_file.exists():
+            self.signal_hub.emit("execution_error", {"error": f"Engine file not found: {engine_file}"})
+            self.running = False
+            return {"status": "error", "message": f"Engine file not found: {engine_file}"}
+
+        try:
+            # Create new process group so we can kill the whole tree
+            # This handles the case where main_engine.py does os.execl() to restart in venv
+            import os
+            if os.name == 'nt':  # Windows
+                # On Windows, use CREATE_NEW_PROCESS_GROUP
+                self.process = subprocess.Popen(
+                    [sys.executable, str(engine_file)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
+            else:  # Unix/Linux/Mac
+                # On Unix, use process group
+                self.process = subprocess.Popen(
+                    [sys.executable, str(engine_file)],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    preexec_fn=os.setsid
+                )
+        except Exception as e:
+            self.signal_hub.emit("execution_error", {"error": str(e)})
+            self.running = False
+            return {"status": "error", "message": str(e)}
+
+
+        # Start threads to handle output
+        threading.Thread(target=self._read_stdout, daemon=True).start()
+        threading.Thread(target=self._read_stderr, daemon=True).start()
+        threading.Thread(target=self._wait_for_completion, daemon=True).start()
+        
+        # Return immediately - don't wait for completion
+        return {"status": "ok", "message": "Engine started"}
+
+    def on_stop_request(self, payload=None):
+        """Gracefully terminate the engine process and all children."""
+        if not self.process or not self.running:
+            return {"status": "error", "message": "No engine running"}
+        
+        try:
+            import os
+            import signal
+            
+            if os.name == 'nt':  # Windows
+                # On Windows, send CTRL_BREAK_EVENT to process group
+                self.process.send_signal(signal.CTRL_BREAK_EVENT)
+            else:  # Unix
+                # On Unix, kill the entire process group
+                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+                
+            return {"status": "ok", "message": "Engine stop requested"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def on_force_stop_request(self, payload=None):
+        """Forcefully kill the engine process and all children."""
+        if not self.process or not self.running:
+            return {"status": "error", "message": "No engine running"}
+        
+        try:
+            import os
+            import signal
+            
+            if os.name == 'nt':  # Windows
+                # On Windows, forcefully kill process tree
+                subprocess.run(['taskkill', '/F', '/T', '/PID', str(self.process.pid)], 
+                              capture_output=True)
+            else:  # Unix
+                # On Unix, send SIGKILL to entire process group
+                os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+                
+            return {"status": "ok", "message": "Engine force stopped"}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
+
+    def _read_stdout(self):
+        if not self.process or not self.process.stdout:
+            return
+        for line in self.process.stdout:
+            line = line.strip()
+            if line:
+                self.signal_hub.emit("execution_output", {"line": line})
+
+    def _read_stderr(self):
+        if not self.process or not self.process.stderr:
+            return
+        for line in self.process.stderr:
+            line = line.strip()
+            if line:
+                self.signal_hub.emit("execution_error", {"line": line})
+
+    def _wait_for_completion(self):
+        if not self.process:
+            return
+        self.process.wait()
+        exit_code = self.process.returncode
+        self.running = False
+        self.current_run_id = None
+        self.process = None
+        self.signal_hub.emit("execution_finished", {"exit_code": exit_code})
