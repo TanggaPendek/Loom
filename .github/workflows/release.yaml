@@ -23,9 +23,9 @@ jobs:
           npm install
           npm run build
 
-      # 2. COMPILE LAUNCHER
+        # 2. COMPILE LAUNCHER
       - name: Compile LoomLauncher
-        run: g++ main_source/LoomLauncher.cpp -o main_source/LoomLauncher.exe -mwindows -s
+        run: g++ main_source/LoomLauncher.cpp -o main_source/LoomLauncher.exe -mconsole -s
 
       # 3. CONSTRUCT THE CLEAN MIRROR
       - name: Prepare Clean Folder

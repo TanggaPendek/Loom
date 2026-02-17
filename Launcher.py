@@ -24,4 +24,4 @@ if __name__ == "__main__":
 
     # 2. Fix: Remove any hidden 'on_closed' arguments. 
     # Just call start() with the GUI renderer and debug mode.
-    webview.start(gui='edgechromium', debug=True)
+    webview.start(gui='edgechromium', debug=False)
