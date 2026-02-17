@@ -4,6 +4,9 @@ on:
     branches:
       - main  # Trigger only when main (stable) is updated
 
+permissions:
+  contents: write
+
 jobs:
   build-and-sync:
     runs-on: windows-latest
