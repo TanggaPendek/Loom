@@ -26,21 +26,23 @@ jobs:
 
       # 3. CONSTRUCT THE CLEAN MIRROR
       - name: Prepare Clean Folder
+        shell: pwsh
         run: |
-          mkdir clean_dist
+          # Create the root distribution folder
+          New-Item -Path "clean_dist" -ItemType Directory -Force
           
           # FILES: Copy root files
-          cp main_source/LoomLauncher.exe clean_dist/
-          cp main_source/Launcher.py clean_dist/
-          cp main_source/requirements.txt clean_dist/
-          cp main_source/README.md clean_dist/
+          Copy-Item "main_source/LoomLauncher.exe" "clean_dist/"
+          Copy-Item "main_source/Launcher.py" "clean_dist/"
+          Copy-Item "main_source/requirements.txt" "clean_dist/"
+          Copy-Item "main_source/README.md" "clean_dist/"
 
-          # FOLDERS: Copy the specific folders you listed
-          cp -r main_source/backend/src clean_dist/backend
-          cp -r main_source/executor clean_dist/executor
-          cp -r main_source/frontend/dist clean_dist/ui
-          cp -r main_source/nodebank clean_dist/nodebank
-          cp -r main_source/userdata clean_dist/userdata
+          # FOLDERS: Copy specific folders (using Recurse for directories)
+          Copy-Item -Path "main_source/backend/src" -Destination "clean_dist/backend" -Recurse -Force
+          Copy-Item -Path "main_source/executor" -Destination "clean_dist/" -Recurse -Force
+          Copy-Item -Path "main_source/frontend/dist" -Destination "clean_dist/ui" -Recurse -Force
+          Copy-Item -Path "main_source/nodebank" -Destination "clean_dist/" -Recurse -Force
+          Copy-Item -Path "main_source/userdata" -Destination "clean_dist/" -Recurse -Force
 
       # 4. FORCE PUSH TO RELEASE BRANCH
       - name: Sync to Release Branch
