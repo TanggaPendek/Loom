@@ -49,14 +49,14 @@ def create_dispatcher(signal_hub, project_backend, log_manager=None):
         cmd = payload.get("cmd")
         signal_name = COMMAND_MAP.get(cmd)
         print("CMD RECEIVED:", cmd)
-        print("COMMAND_MAP KEYS:", list(COMMAND_MAP.keys()))
+        #print("COMMAND_MAP KEYS:", list(COMMAND_MAP.keys()))
 
         
         if not signal_name:
             return {"status": "error", "message": f"Unknown action: {cmd}"}
         
         results = signal_hub.emit(signal_name, payload)
-        print(f"DEBUG: Signal {signal_name} returned results: {results}")
+        #print(f"DEBUG: Signal {signal_name} returned results: {results}")
         
         # Check if we got any results
         if not results or len(results) == 0:

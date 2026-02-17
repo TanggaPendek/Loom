@@ -88,12 +88,9 @@ async def main_async():
             # Clear logs for new run - NOW happens only once in final environment
             if project_id:
                 log_manager.clear_logs(project_id)
-                log_manager.append_log(project_id, "Engine starting...")
         except Exception as e:
             print(f"[ENGINE WARNING] Failed to initialize state/logging: {e}")
     
-    if log_manager and project_id:
-        log_manager.append_log(project_id, "Loading graph...")
     
     debug_mode = os.getenv("DEBUG", "False").lower() == "true"
     signal_hub = EngineSignalHub(enable_logging=debug_mode)
@@ -101,18 +98,12 @@ async def main_async():
     with graph_path.open("r", encoding="utf-8-sig") as f:
         graph = json.load(f)
 
-    if log_manager and project_id:
-        log_manager.append_log(project_id, f"Graph loaded: {len(graph.get('nodes', []))} nodes, {len(graph.get('connections', []))} connections")
-    
     exec_mgr = ExecutionManager(
         nodes=None, 
         connections=graph.get("connections", []),
         signal_hub=signal_hub
     )
 
-    if log_manager and project_id:
-        log_manager.append_log(project_id, "Initializing execution manager...")
-    
     await exec_mgr.initialize_async(
         nodes=graph.get("nodes", []),
         nodebank_path=os.getenv("NODEBANK_PATH", "nodebank"),
@@ -125,14 +116,9 @@ async def main_async():
     if engine_state_mgr:
         engine_state_mgr.set_engine_state("running", project_id=project_id)
     
-    if log_manager and project_id:
-        log_manager.append_log(project_id, "Executing graph...")
-    
     await exec_mgr.run_async()
     
     # Execution completed successfully
-    if log_manager and project_id:
-        log_manager.append_log(project_id, "Execution completed successfully")
     
     if engine_state_mgr:
         engine_state_mgr.set_engine_state("idle", project_id=project_id)

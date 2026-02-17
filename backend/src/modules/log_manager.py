@@ -72,7 +72,8 @@ class LogManager:
         if log_file:
             try:
                 log_file.write_text("[]", encoding="utf-8")
-                print(f"[LogManager] Cleared logs: {log_file}")
+                #print(f"[LogManager] Cleared logs: {log_file}")
+                print("")
             except Exception as e:
                 print(f"[LogManager ERROR] Failed to clear logs: {e}")
         else:

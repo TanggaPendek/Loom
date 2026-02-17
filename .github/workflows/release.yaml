@@ -1,0 +1,57 @@
+name: Mirror Clean Release
+on:
+  push:
+    branches:
+      - main  # Trigger only when main (stable) is updated
+
+jobs:
+  build-and-sync:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Main
+        uses: actions/checkout@v4
+        with:
+          path: main_source
+
+      # 1. BUILD FRONTEND
+      - name: Build UI
+        run: |
+          cd main_source/frontend
+          npm install
+          npm run build
+
+      # 2. COMPILE LAUNCHER
+      - name: Compile LoomLauncher
+        run: g++ main_source/LoomLauncher.cpp -o main_source/LoomLauncher.exe -mwindows -s
+
+      # 3. CONSTRUCT THE CLEAN MIRROR
+      - name: Prepare Clean Folder
+        run: |
+          mkdir clean_dist
+          
+          # FILES: Copy root files
+          cp main_source/LoomLauncher.exe clean_dist/
+          cp main_source/Launcher.py clean_dist/
+          cp main_source/requirements.txt clean_dist/
+          cp main_source/README.md clean_dist/
+
+          # FOLDERS: Copy the specific folders you listed
+          cp -r main_source/backend/src clean_dist/backend
+          cp -r main_source/executor clean_dist/executor
+          cp -r main_source/frontend/dist clean_dist/ui
+          cp -r main_source/nodebank clean_dist/nodebank
+          cp -r main_source/userdata clean_dist/userdata
+
+      # 4. FORCE PUSH TO RELEASE BRANCH
+      - name: Sync to Release Branch
+        run: |
+          cd clean_dist
+          git init
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git checkout -b release
+          git add .
+          git commit -m "Mirroring stable release from main: ${{ github.sha }}"
+          # This force-pushes to the 'release' branch, overwriting old junk
+          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git push origin release --force

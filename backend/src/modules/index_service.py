@@ -56,7 +56,9 @@ class IndexService:
         with open(self.project_index_path, "w", encoding="utf-8") as f:
             json.dump(index, f, indent=4)
 
-        print(f"[INDEX] Projects indexed: {len(index)}")
+        print(f"[INDEX] Projects indexed")
+
+        #print(f"[INDEX] Projects indexed: {len(index)}")
 
     # -------------------------
     # NODE INDEX
@@ -78,5 +80,5 @@ class IndexService:
 
         with open(self.node_index_path, "w", encoding="utf-8") as f:
             json.dump(all_nodes, f, indent=4)
-
-        print(f"[INDEX] Nodes indexed: {len(all_nodes)}")
+        print(f"[INDEX] Projects indexed")
+        #print(f"[INDEX] Nodes indexed: {len(all_nodes)}")

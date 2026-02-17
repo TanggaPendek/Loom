@@ -1,39 +1,5 @@
 [
     {
-        "nodeId": "dict_get_node",
-        "name": "Dict Get",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\dict_get_node.py",
-        "entryFunction": "dict_get_node",
-        "dynamic": {
-            "inputs": [
-                "DictObj",
-                "Key"
-            ],
-            "outputs": [
-                "return",
-                "None"
-            ]
-        }
-    },
-    {
-        "nodeId": "dict_set_node",
-        "name": "Dict Set",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\dict_set_node.py",
-        "entryFunction": "dict_set_node",
-        "dynamic": {
-            "inputs": [
-                "DictObj",
-                "Key",
-                "Value"
-            ],
-            "outputs": [
-                "DictObj"
-            ]
-        }
-    },
-    {
         "nodeId": "io_input_node",
         "name": "Io Input",
         "type": "script_node",
@@ -59,37 +25,6 @@
                 "inputs"
             ],
             "outputs": []
-        }
-    },
-    {
-        "nodeId": "list_append_node",
-        "name": "List Append",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\list_append_node.py",
-        "entryFunction": "list_append_node",
-        "dynamic": {
-            "inputs": [
-                "List",
-                "Item"
-            ],
-            "outputs": [
-                "List"
-            ]
-        }
-    },
-    {
-        "nodeId": "list_length_node",
-        "name": "List Length",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\list_length_node.py",
-        "entryFunction": "list_length_node",
-        "dynamic": {
-            "inputs": [
-                "List"
-            ],
-            "outputs": [
-                "ListLegnth"
-            ]
         }
     },
     {
@@ -153,23 +88,6 @@
             ],
             "outputs": [
                 "Bool"
-            ]
-        }
-    },
-    {
-        "nodeId": "loop_for_node",
-        "name": "Loop For",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\loop_for_node.py",
-        "entryFunction": "loop_for_node",
-        "dynamic": {
-            "inputs": [
-                "Start",
-                "End",
-                "Step"
-            ],
-            "outputs": [
-                "Loop"
             ]
         }
     },
@@ -312,25 +230,6 @@
             ],
             "outputs": [
                 "String"
-            ]
-        }
-    },
-    {
-        "nodeId": "test_node",
-        "name": "Test",
-        "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\test_node.py",
-        "entryFunction": "test_node",
-        "dynamic": {
-            "inputs": [
-                "a",
-                "b",
-                "c"
-            ],
-            "outputs": [
-                "sum_val",
-                "product",
-                "max_val"
             ]
         }
     }

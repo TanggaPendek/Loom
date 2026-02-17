@@ -152,9 +152,11 @@ def handle_engine_output(payload: Dict) -> None:
     """Process engine output and forward to appropriate channels."""
     line = payload.get("line", "")
     if line.startswith("PROGRESS:"):
-        print(f"UI Update: {line}")
+        #print(f"UI Update: {line}")
+        print("")
     else:
-        print(f"Engine Log: {line}")
+        #print(f"Engine Log: {line}")
+        print("")
 
 
 def on_finished(payload: Dict) -> None:
