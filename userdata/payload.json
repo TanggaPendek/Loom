@@ -1,8 +1,0 @@
-{
-  "entity_type": "node",
-  "entity_id": "node_2",
-  "updates": {
-    "position": { "x": 400, "y": 300 },
-    "name": "add_node_updated"
-  }
-}

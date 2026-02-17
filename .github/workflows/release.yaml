@@ -2,7 +2,7 @@ name: Mirror Clean Release
 on:
   push:
     branches:
-      - main  # Trigger only when main (stable) is updated
+      - main
 
 permissions:
   contents: write
@@ -29,26 +29,31 @@ jobs:
 
       # 3. CONSTRUCT THE CLEAN MIRROR
       - name: Prepare Clean Folder
-        shell: pwsh
+        shell: bash
         run: |
-          # Create the root distribution folder
-          New-Item -Path "clean_dist" -ItemType Directory -Force
-          
-          # FILES: Copy root files
-          Copy-Item "main_source/LoomLauncher.exe" "clean_dist/"
-          Copy-Item "main_source/Launcher.py" "clean_dist/"
-          Copy-Item "main_source/requirements.txt" "clean_dist/"
-          Copy-Item "main_source/README.md" "clean_dist/"
+          # 1. Copy everything to maintain exact structure
+          mkdir -p clean_dist
+          cp -r main_source/. clean_dist/
+          cd clean_dist
 
-          # FOLDERS: Copy specific folders (using Recurse for directories)
-          Copy-Item -Path "main_source/backend/src" -Destination "clean_dist/backend" -Recurse -Force
-          Copy-Item -Path "main_source/executor" -Destination "clean_dist/" -Recurse -Force
-          Copy-Item -Path "main_source/frontend/dist" -Destination "clean_dist/ui" -Recurse -Force
-          Copy-Item -Path "main_source/nodebank" -Destination "clean_dist/" -Recurse -Force
-          Copy-Item -Path "main_source/userdata" -Destination "clean_dist/" -Recurse -Force
+          # 2. DELETE ONLY THE JUNK (No renaming)
+          rm -rf .git .github .gitignore .vscode
+          rm -f LoomLauncher.cpp
+          
+          # 3. CLEAN FRONTEND (Keep only the 'dist' folder inside 'frontend')
+          # This keeps the path as: frontend/dist/
+          find frontend -mindepth 1 -maxdepth 1 ! -name 'dist' -exec rm -rf {} +
+
+          # 4. Clean up Python leftovers in any directory
+          find . -type d -name "__pycache__" -exec rm -rf {} +
+          find . -type d -name "node_modules" -exec rm -rf {} +
+
+          echo "Final folder structure (Strictly following original naming):"
+          ls -R
 
       # 4. FORCE PUSH TO RELEASE BRANCH
       - name: Sync to Release Branch
+        shell: bash
         run: |
           cd clean_dist
           git init
@@ -56,7 +61,6 @@ jobs:
           git config user.email "github-actions@github.com"
           git checkout -b release
           git add .
-          git commit -m "Mirroring stable release from main: ${{ github.sha }}"
-          # This force-pushes to the 'release' branch, overwriting old junk
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git commit -m "Mirroring stable release from main: ${GITHUB_SHA}"
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git push origin release --force
