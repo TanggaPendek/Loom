@@ -10,6 +10,7 @@ coverage.xml
 # User data (project files)
 userdata/
 userfolder/
+nodebank/nodeindex.json
 
 # Virtual environments
 .venv/
