@@ -67,6 +67,9 @@ class ExecutionManager:
         self.running = True
         self.current_run_id = current.get("projectId")
         self.signal_hub.emit("execution_started", {"projectId": self.current_run_id})
+        print("[BACKEND] " + "─" * 60)
+        print(f"[BACKEND] Engine process starting...")
+        sys.stdout.flush()
 
         # Launch engine process (absolute path from project root)
         project_root = Path(__file__).parent.parent.parent.parent  # go up from backend/src/modules/
@@ -109,7 +112,7 @@ class ExecutionManager:
         threading.Thread(target=self._read_stdout, daemon=True).start()
         threading.Thread(target=self._read_stderr, daemon=True).start()
         threading.Thread(target=self._wait_for_completion, daemon=True).start()
-        
+
         # Return immediately - don't wait for completion
         return {"status": "ok", "message": "Engine started"}
 
@@ -158,17 +161,19 @@ class ExecutionManager:
         if not self.process or not self.process.stdout:
             return
         for line in self.process.stdout:
-            line = line.strip()
+            line = line.rstrip()
             if line:
-                self.signal_hub.emit("execution_output", {"line": line})
+                print(line)
+                sys.stdout.flush()
 
     def _read_stderr(self):
         if not self.process or not self.process.stderr:
             return
         for line in self.process.stderr:
-            line = line.strip()
+            line = line.rstrip()
             if line:
-                self.signal_hub.emit("execution_error", {"line": line})
+                print(line, file=sys.stderr)
+                sys.stderr.flush()
 
     def _wait_for_completion(self):
         if not self.process:
@@ -178,4 +183,7 @@ class ExecutionManager:
         self.running = False
         self.current_run_id = None
         self.process = None
+        print(f"[BACKEND] Engine process exited (code={exit_code})")
+        print("[BACKEND] " + "─" * 60)
+        sys.stdout.flush()
         self.signal_hub.emit("execution_finished", {"exit_code": exit_code})

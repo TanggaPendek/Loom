@@ -10,18 +10,21 @@ import {
 } from "lucide-react";
 import LogsPanel from "./LogsPanel";
 import {
-  runEngine,
-  stopEngine,
-  forceStop,
   updateGraphNodeInput,
   deleteGraphNode,
   deleteConnection,
 } from "../../api/commands";
 
-const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
-  const [engineState, setEngineState] = useState("idle"); // 'idle' or 'running'
+const PropertiesBar = ({
+  selectedElement,
+  onUpdateValue,
+  edges,
+  engineStatus = "idle",
+  onRunEngine,
+  onStopEngine,
+  onForceStop,
+}) => {
   const [localInputs, setLocalInputs] = useState([]);
-
 
   // Update local inputs when selection changes
   useEffect(() => {
@@ -39,10 +42,8 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
   // Check if input has connection
   const hasConnection = (inputIndex) => {
     if (!edges || !selectedElement) return false;
-
     const input = localInputs[inputIndex];
     if (!input) return false;
-
     return edges.some(
       (edge) =>
         edge.target === selectedElement.id && edge.targetHandle === input.var,
@@ -58,18 +59,11 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
 
   // AUTO-COMMIT ON BLUR
   const commitValue = async (idx, finalValue) => {
-    // Sync with canvas
     if (onUpdateValue) {
       onUpdateValue(idx, finalValue);
     }
-
-    // Sync with backend
     try {
       await updateGraphNodeInput(selectedElement.id, idx, finalValue);
-      console.log(
-        `PropertiesBar: Committed value for input ${idx}:`,
-        finalValue,
-      );
     } catch (error) {
       console.error("Failed to update node input:", error);
     }
@@ -78,20 +72,15 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
   // DELETE HANDLER
   const handleDelete = async () => {
     if (!selectedElement) return;
-
     const confirmDelete = window.confirm(
       `Are you sure you want to delete this ${isNode ? "node" : "edge"}?`,
     );
-
     if (!confirmDelete) return;
-
     try {
       if (isNode) {
         await deleteGraphNode(selectedElement.id);
       } else if (isEdge) {
-        // For edges, we need to extract the connection details
         const edge = selectedElement;
-        // Resolve port indices from handles
         const sourceNode = edges.find((e) => e.id === edge.id);
         if (sourceNode) {
           await deleteConnection(
@@ -102,32 +91,17 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
           );
         }
       }
-
-      // Trigger canvas refresh (parent component handles this)
       console.log("Element deleted successfully");
     } catch (error) {
       console.error("Failed to delete element:", error);
     }
   };
 
-  // SIMPLIFIED ENGINE COMMANDS - await response for state management
-  const handleEngineAction = async (actionType) => {
-    try {
-      if (actionType === "START") {
-        setEngineState("running"); // Set to running immediately
-        await runEngine(); // Wait for completion
-        setEngineState("idle"); // Return to idle when done
-      } else if (actionType === "STOP") {
-        await stopEngine();
-        setEngineState("idle");
-      } else if (actionType === "FORCE") {
-        await forceStop();
-        setEngineState("idle");
-      }
-    } catch (error) {
-      console.error(`Engine ${actionType} command failed:`, error);
-      setEngineState("idle"); // Reset to idle on error
-    }
+  // ENGINE COMMANDS — delegated to App.jsx which holds the WS hook
+  const handleEngineAction = (actionType) => {
+    if (actionType === "START") onRunEngine?.();
+    else if (actionType === "STOP") onStopEngine?.();
+    else if (actionType === "FORCE") onForceStop?.();
   };
 
   return (
@@ -181,7 +155,6 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
           <div className="p-6 space-y-4">
             {localInputs.map((inp, idx) => {
               const connected = hasConnection(idx);
-
               return (
                 <div
                   key={idx}
@@ -207,9 +180,7 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
                     value={inp.value || ""}
                     onChange={(e) => handleTyping(idx, e.target.value)}
                     onBlur={(e) => {
-                      if (!connected) {
-                        commitValue(idx, e.target.value);
-                      }
+                      if (!connected) commitValue(idx, e.target.value);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !connected) {
@@ -218,9 +189,7 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
                       }
                     }}
                     disabled={connected}
-                    placeholder={
-                      connected ? "Using connection..." : "Enter value..."
-                    }
+                    placeholder={connected ? "Using connection..." : "Enter value..."}
                   />
 
                   {connected && (
@@ -246,14 +215,14 @@ const PropertiesBar = ({ selectedElement, onUpdateValue, edges }) => {
             </div>
           </div>
         ) : (
-          <LogsPanel isPolling={engineState === "running"} />
+          <LogsPanel isPolling={engineStatus === "running"} />
         )}
       </div>
 
       {/* FOOTER - Engine Controls */}
       <footer className="p-6 border-t border-emerald-100/50 bg-emerald-50/40">
         <div className="flex flex-col gap-3">
-          {engineState === "idle" ? (
+          {engineStatus === "idle" ? (
             <button
               onClick={() => handleEngineAction("START")}
               className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-95"

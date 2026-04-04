@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import Canvas from "./components/canvas/canvas.jsx";
 import Sidebar from "./components/sidebar/Sidebar.jsx";
 import Navbar from "./components/navbar/navbar.jsx";
 import PropertiesBar from "./components/propertiesBar/propertiesBar.jsx";
-import EngineButton from "./components/engine_button.jsx";
-import { initProject } from "./api/commands.jsx";
+import { initProject, runEngine, stopEngine, forceStop } from "./api/commands.jsx";
 import ProjectModal from "./modal/projectList.jsx";
 import { ReactFlowProvider } from "reactflow";
+import { useEngineSocket } from "./hooks/useEngineSocket.js";
 import {
   Loader2,
   ChevronLeft,
@@ -24,7 +24,23 @@ function App() {
   const [isWeaving, setIsWeaving] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [propertiesCollapsed, setPropertiesCollapsed] = useState(false);
-  const [canvasEdges, setCanvasEdges] = useState([]); // Store edges from Canvas
+  const [canvasEdges, setCanvasEdges] = useState([]);
+
+  // ── WebSocket engine state ─────────────────────────────────────────────────
+  const { engineStatus, lastMessage } = useEngineSocket();
+
+  const handleRunEngine = useCallback(async () => {
+    try { await runEngine(); } catch (e) { console.error("Run engine failed:", e); }
+  }, []);
+
+  const handleStopEngine = useCallback(async () => {
+    try { await stopEngine(); } catch (e) { console.error("Stop engine failed:", e); }
+  }, []);
+
+  const handleForceStop = useCallback(async () => {
+    try { await forceStop(); } catch (e) { console.error("Force stop failed:", e); }
+  }, []);
+  // ──────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     initProject().then((data) => {
@@ -48,7 +64,6 @@ function App() {
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    // Re-open after a tiny tick to force a full remount/refresh
     setTimeout(() => {
       setIsModalOpen(true);
     }, 10);
@@ -59,7 +74,6 @@ function App() {
     setSelectedElement(element);
   };
 
-  // Calculate grid template columns based on collapse state
   const gridColumns = `${sidebarCollapsed ? "40px" : "260px"} 1fr ${propertiesCollapsed ? "40px" : "300px"}`;
 
   return (
@@ -128,7 +142,9 @@ function App() {
               <Canvas
                 onSelect={(element) => setSelectedElement(element)}
                 onRegisterRefresh={setRefreshCanvas}
-                onEdgesUpdate={setCanvasEdges} // Get edges from Canvas
+                onEdgesUpdate={setCanvasEdges}
+                engineStatus={engineStatus}
+                lastMessage={lastMessage}
               />
             </ReactFlowProvider>
           </div>
@@ -140,7 +156,11 @@ function App() {
             <>
               <PropertiesBar
                 selectedElement={selectedElement}
-                edges={canvasEdges} // Pass edges to PropertiesBar
+                edges={canvasEdges}
+                engineStatus={engineStatus}
+                onRunEngine={handleRunEngine}
+                onStopEngine={handleStopEngine}
+                onForceStop={handleForceStop}
               />
               <button
                 onClick={() => setPropertiesCollapsed(true)}

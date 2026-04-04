@@ -6,8 +6,10 @@ import sys
 from backend.src.main_backend import app
 
 def start_backend():
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-
+    config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    server.run()
+    
 def on_close():
     os._exit(0)  # force exit safely
 

@@ -126,12 +126,8 @@ const LogsPanel = ({ isPolling }) => {
                                     className="group mb-2 p-3 bg-white/60 hover:bg-white rounded-[16px] border border-emerald-100/30 hover:border-emerald-200 transition-all"
                                 >
                                     <div className="flex items-start gap-3">
-                                        {timeStr && (
-                                            <span className="text-[10px] font-mono text-emerald-500/50 font-semibold mt-0.5 flex-shrink-0">
-                                                {new Date(timeStr).toLocaleTimeString()}
-                                            </span>
-                                        )}
-                                        <span className="text-xs text-emerald-900 leading-relaxed flex-1">
+                                    
+                                        <span className="text-xl text-emerald-900 leading-relaxed flex-1">
                                             {message}
                                         </span>
                                     </div>

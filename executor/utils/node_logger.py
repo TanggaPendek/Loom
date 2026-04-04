@@ -46,7 +46,7 @@ def init_logger(node_id: str, log_file_path: str = None) -> None:
         with open(_LOG_FILE_PATH, "w", encoding="utf-8") as f:
             json.dump([], f)
     
-    print(f"[Logger] Initialized. Logging to: {_LOG_FILE_PATH}")
+    # Logger ready (no need to print per-node)
 
 def log_print(message: str, level: str = "info") -> None:
     # ... (Rest of your log_print logic stays the same)

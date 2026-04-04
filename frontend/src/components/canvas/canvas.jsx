@@ -32,6 +32,8 @@ export default function Canvas({
   onSelect,
   onNodesUpdate,
   onEdgesUpdate,
+  engineStatus,
+  lastMessage,
 }) {
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
@@ -442,6 +444,31 @@ export default function Canvas({
         style={{ filter: "url(#canvas-cotton-texture)" }}
       />
 
+      {/* ── ENGINE RUNNING OVERLAY ─────────────────────────────────────── */}
+      {engineStatus === "running" && (
+        <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center
+                        bg-white/70 backdrop-blur-md pointer-events-auto select-none">
+          <div className="relative w-16 h-16 mb-5">
+            <div className="absolute inset-0 rounded-full border-4 border-emerald-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+          </div>
+          <p className="text-[11px] font-black uppercase tracking-[0.25em] text-emerald-800 mb-2">
+            Engine Running
+          </p>
+          <p
+            className="max-w-xs text-center text-[10px] font-mono text-emerald-600/80
+                       bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2 truncate"
+            title={lastMessage}
+          >
+            {lastMessage || "…"}
+          </p>
+        </div>
+      )}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       {/* Floating UI: Refresh Button */}
       <div className="absolute top-8 right-8 z-50">
         <button
@@ -452,9 +479,8 @@ export default function Canvas({
                      text-emerald-500 hover:text-rose-500 transition-all duration-300 active:scale-90"
         >
           <svg
-            className={`w-6 h-6 transition-all duration-700 ease-in-out ${
-              isAnimating ? "animate-spin text-rose-500" : ""
-            }`}
+            className={`w-6 h-6 transition-all duration-700 ease-in-out ${isAnimating ? "animate-spin text-rose-500" : ""
+              }`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

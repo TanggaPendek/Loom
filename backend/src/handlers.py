@@ -110,36 +110,37 @@ def get_next_node_id(nodes: list) -> tuple[str, str]:
 # ============================================================================
 
 def launch_engine(payload: Dict) -> Dict:
-    """Launch the executor engine as a subprocess."""
-    print("[BACKEND] Launching executor engine via signal...")
+    """Launch the executor engine as a subprocess, piping output to backend terminal."""
+    print("[BACKEND] Launching executor engine...")
+    sys.stdout.flush()
     engine_path = ROOT_DIR / "executor" / "engine" / "main_engine.py"
-    
+
     try:
-        # Import here to avoid circular dependencies
         from .modules.engine_state_manager import EngineStateManager
         engine_state_mgr = EngineStateManager()
-        
-        # Get current project from state
+
         state = load_json_file(STATE_PATH)
         project_id = state.get("projectId") if state else None
-        
-        # Set engine state to initializing
+
         engine_state_mgr.set_engine_state("initializing", project_id=project_id)
-        
-        # Launch subprocess
-        process = subprocess.Popen([sys.executable, str(engine_path)])
-        
-        # Update state with process ID and running status
+
+        # Pipe stdout/stderr so engine [ENGINE] prints appear in the backend terminal
+        process = subprocess.Popen(
+            [sys.executable, "-u", str(engine_path)],
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+
         engine_state_mgr.set_engine_state("running", project_id=project_id, process_id=process.pid)
-        
+
         return {"status": "ok", "message": "Engine started", "process_id": process.pid}
     except Exception as e:
         print(f"[BACKEND ERROR] Failed to launch engine: {e}")
-        # Set error state
+        sys.stdout.flush()
         try:
             engine_state_mgr = EngineStateManager()
             engine_state_mgr.set_engine_state(
-                "error", 
+                "error",
                 project_id=project_id if 'project_id' in locals() else None,
                 error={"message": str(e), "timestamp": datetime.utcnow().isoformat() + "Z"}
             )
@@ -149,14 +150,11 @@ def launch_engine(payload: Dict) -> Dict:
 
 
 def handle_engine_output(payload: Dict) -> None:
-    """Process engine output and forward to appropriate channels."""
+    """Print engine stdout lines and broadcast to WS service."""
     line = payload.get("line", "")
-    if line.startswith("PROGRESS:"):
-        #print(f"UI Update: {line}")
-        print("")
-    else:
-        #print(f"Engine Log: {line}")
-        print("")
+    if line:
+        print(line)
+        sys.stdout.flush()
 
 
 def on_finished(payload: Dict) -> None:

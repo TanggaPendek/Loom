@@ -3,7 +3,7 @@
         "nodeId": "io_input_node",
         "name": "Io Input",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\io_input_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\io_input_node.py",
         "entryFunction": "io_input_node",
         "dynamic": {
             "inputs": [
@@ -18,7 +18,7 @@
         "nodeId": "io_print_node",
         "name": "Io Print",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\io_print_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\io_print_node.py",
         "entryFunction": "io_print_node",
         "dynamic": {
             "inputs": [
@@ -31,7 +31,7 @@
         "nodeId": "logic_equal_node",
         "name": "Logic Equal",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_equal_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\logic_equal_node.py",
         "entryFunction": "logic_equal_node",
         "dynamic": {
             "inputs": [
@@ -47,7 +47,7 @@
         "nodeId": "logic_greater_node",
         "name": "Logic Greater",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_greater_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\logic_greater_node.py",
         "entryFunction": "logic_greater_node",
         "dynamic": {
             "inputs": [
@@ -63,7 +63,7 @@
         "nodeId": "logic_less_node",
         "name": "Logic Less",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_less_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\logic_less_node.py",
         "entryFunction": "logic_less_node",
         "dynamic": {
             "inputs": [
@@ -79,7 +79,7 @@
         "nodeId": "logic_not_equal_logic_not_equal_node",
         "name": "Logic Not Equal",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\logic_not_equal.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\logic_not_equal.py",
         "entryFunction": "logic_not_equal_node",
         "dynamic": {
             "inputs": [
@@ -95,7 +95,7 @@
         "nodeId": "math_add_node",
         "name": "Math Add",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_add_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\math_add_node.py",
         "entryFunction": "math_add_node",
         "dynamic": {
             "inputs": [
@@ -111,7 +111,7 @@
         "nodeId": "math_divide_node",
         "name": "Math Divide",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_divide_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\math_divide_node.py",
         "entryFunction": "math_divide_node",
         "dynamic": {
             "inputs": [
@@ -127,7 +127,7 @@
         "nodeId": "math_multiply_node",
         "name": "Math Multiply",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_multiply_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\math_multiply_node.py",
         "entryFunction": "math_multiply_node",
         "dynamic": {
             "inputs": [
@@ -143,7 +143,7 @@
         "nodeId": "math_subtract_node",
         "name": "Math Subtract",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\math_subtract_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\math_subtract_node.py",
         "entryFunction": "math_subtract_node",
         "dynamic": {
             "inputs": [
@@ -159,7 +159,7 @@
         "nodeId": "random_float_node",
         "name": "Random Float",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\random_float_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\random_float_node.py",
         "entryFunction": "random_float_node",
         "dynamic": {
             "inputs": [
@@ -175,7 +175,7 @@
         "nodeId": "random_int_node",
         "name": "Random Int",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\random_int_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\random_int_node.py",
         "entryFunction": "random_int_node",
         "dynamic": {
             "inputs": [
@@ -191,7 +191,7 @@
         "nodeId": "string_concat_node",
         "name": "String Concat",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_concat_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\string_concat_node.py",
         "entryFunction": "string_concat_node",
         "dynamic": {
             "inputs": [
@@ -207,7 +207,7 @@
         "nodeId": "string_lower_node",
         "name": "String Lower",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_lower_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\string_lower_node.py",
         "entryFunction": "string_lower_node",
         "dynamic": {
             "inputs": [
@@ -222,7 +222,7 @@
         "nodeId": "string_upper_node",
         "name": "String Upper",
         "type": "script_node",
-        "scriptPath": "G:\\Github\\Loom\\Loom\\nodebank\\builtin\\string_upper_node.py",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\builtin\\string_upper_node.py",
         "entryFunction": "string_upper_node",
         "dynamic": {
             "inputs": [
@@ -230,6 +230,235 @@
             ],
             "outputs": [
                 "String"
+            ]
+        }
+    },
+    {
+        "nodeId": "config_merge_node",
+        "name": "Config Merge",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\config_merge_node.py",
+        "entryFunction": "config_merge_node",
+        "dynamic": {
+            "inputs": [
+                "port",
+                "host",
+                "cors_config"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "cors_create_node",
+        "name": "Cors Create",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\cors_create_node.py",
+        "entryFunction": "cors_create_node",
+        "dynamic": {
+            "inputs": [
+                "enabled",
+                "origins",
+                "methods"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "host_create_node",
+        "name": "Host Create",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\host_create_node.py",
+        "entryFunction": "host_create_node",
+        "dynamic": {
+            "inputs": [
+                "host"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "port_create_node",
+        "name": "Port Create",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\port_create_node.py",
+        "entryFunction": "port_create_node",
+        "dynamic": {
+            "inputs": [
+                "port"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "print_pid_node",
+        "name": "Print Pid",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\print_pid_node.py",
+        "entryFunction": "print_pid_node",
+        "dynamic": {
+            "inputs": [
+                "pid"
+            ],
+            "outputs": [
+                "pid"
+            ]
+        }
+    },
+    {
+        "nodeId": "routes_create_node",
+        "name": "Routes Create",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\routes_create_node.py",
+        "entryFunction": "routes_create_node",
+        "dynamic": {
+            "inputs": [
+                "path",
+                "method",
+                "status",
+                "body"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "routes_merge_node",
+        "name": "Routes Merge",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\routes_merge_node.py",
+        "entryFunction": "routes_merge_node",
+        "dynamic": {
+            "inputs": [
+                "route_a",
+                "route_b"
+            ],
+            "outputs": [
+                "result"
+            ]
+        }
+    },
+    {
+        "nodeId": "server_spawn_node_spawn_server_node",
+        "name": "Spawn Server",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\server_spawn_node.py",
+        "entryFunction": "spawn_server_node",
+        "dynamic": {
+            "inputs": [
+                "server_config",
+                "routes"
+            ],
+            "outputs": [
+                "pid"
+            ]
+        }
+    },
+    {
+        "nodeId": "static_create_node",
+        "name": "Static Create",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\static_create_node.py",
+        "entryFunction": "static_create_node",
+        "dynamic": {
+            "inputs": [
+                "serve_static",
+                "directory"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "viz_array_node",
+        "name": "Viz Array",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\viz_array_node.py",
+        "entryFunction": "viz_array_node",
+        "dynamic": {
+            "inputs": [
+                "size",
+                "min_val",
+                "max_val"
+            ],
+            "outputs": [
+                "arr"
+            ]
+        }
+    },
+    {
+        "nodeId": "viz_config_node",
+        "name": "Viz Config",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\viz_config_node.py",
+        "entryFunction": "viz_config_node",
+        "dynamic": {
+            "inputs": [
+                "algorithm",
+                "speed",
+                "bar_color",
+                "highlight_color"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "viz_launch_node",
+        "name": "Viz Launch",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\viz_launch_node.py",
+        "entryFunction": "viz_launch_node",
+        "dynamic": {
+            "inputs": [
+                "full_config"
+            ],
+            "outputs": [
+                "pid"
+            ]
+        }
+    },
+    {
+        "nodeId": "viz_merge_config_node",
+        "name": "Viz Merge Config",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\viz_merge_config_node.py",
+        "entryFunction": "viz_merge_config_node",
+        "dynamic": {
+            "inputs": [
+                "array",
+                "viz_config",
+                "window_config"
+            ],
+            "outputs": [
+                "return"
+            ]
+        }
+    },
+    {
+        "nodeId": "viz_window_node",
+        "name": "Viz Window",
+        "type": "script_node",
+        "scriptPath": "G:\\Github\\Loom\\Loom2.1\\nodebank\\custom\\viz_window_node.py",
+        "entryFunction": "viz_window_node",
+        "dynamic": {
+            "inputs": [
+                "width",
+                "height",
+                "title"
+            ],
+            "outputs": [
+                "return"
             ]
         }
     }
